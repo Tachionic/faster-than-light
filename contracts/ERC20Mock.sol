@@ -14,20 +14,4 @@ contract ERC20Mock is ERC20 {
     ) payable ERC20(name, symbol) {
         _mint(initialAccount, initialBalance);
     }
-
-    function mint(address account, uint256 amount) public {
-        _mint(account, amount);
-    }
-
-    function burn(address account, uint256 amount) public {
-        _burn(account, amount);
-    }
-
-    function transferInternal(address from, address to, uint256 value) public {
-        _transfer(from, to, value);
-    }
-
-    function approveInternal(address owner, address spender, uint256 value) public {
-        _approve(owner, spender, value);
-    }
 }

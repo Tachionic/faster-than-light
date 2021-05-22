@@ -13,9 +13,10 @@ contract YieldFarming is Ownable {
     using SafeERC20 for IERC20;
 
     event AcceptedTokenDeposit(address messageSender, uint amount);
+    event YieldFarmingTokenBurn(address messageSender, uint amount);
 
     RewardCalculator immutable private rewardCalculator;
-    YieldFarmingToken immutable private token;
+    YieldFarmingToken immutable public yieldFarmingToken;
     IERC20 immutable private acceptedToken;
     bytes16 private interestRate;
     bytes16 private multiplier;
@@ -26,7 +27,7 @@ contract YieldFarming is Ownable {
 
     constructor(IERC20 _acceptedToken, RewardCalculator _rewardCalculator, string memory _tokenName, string memory _tokenSymbol, bytes16 _interestRate, bytes16 _multiplier, uint _lockTime){
         updateTokenomics(_interestRate, _multiplier, _lockTime);
-        token = new YieldFarmingToken(_tokenName, _tokenSymbol);
+        yieldFarmingToken = new YieldFarmingToken(_tokenName, _tokenSymbol);
         rewardCalculator = _rewardCalculator;
         acceptedToken = _acceptedToken;
     }
@@ -44,12 +45,25 @@ contract YieldFarming is Ownable {
         acceptedToken.safeTransferFrom(messageSender, address(this), amount);
         emit AcceptedTokenDeposit(messageSender, amount);
         // solhint-disable-next-line not-rely-on-time
-        TokenTimelock tokenTimeLock = new TokenTimelock(token, messageSender, block.timestamp + lockTime);
+        TokenTimelock tokenTimeLock = new TokenTimelock(yieldFarmingToken, messageSender, block.timestamp + lockTime);
         tokenTimeLocks[messageSender] = tokenTimeLock;
-        token.mint(
+        yieldFarmingToken.mint(
             address(tokenTimeLock),
             rewardCalculator.calculateQuantity(amount, multiplier, interestRate, tokenomicsTimestamp)
         );
+    }
+
+    function burn(uint amount) public {
+        address messageSender = _msgSender();
+        // // Original implementation:
+        // yieldFarmingToken.safeTransferFrom(messageSender, address(this), amount);
+        // yieldFarmingToken.safeIncreaseAllowance(address(this), amount);
+        // yieldFarmingToken.burn(amount);
+        
+        // Optimized implementation:
+        yieldFarmingToken.burnFrom(messageSender, amount);
+        
+        emit YieldFarmingTokenBurn(messageSender, amount);
     }
 
     function getMyTokenTimelock() public view returns (TokenTimelock) {

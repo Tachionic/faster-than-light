@@ -1,9 +1,11 @@
 const RewardCalculator = artifacts.require('RewardCalculator')
 const YieldFarming = artifacts.require('YieldFarming')
+const YieldFarmingToken = artifacts.require('YieldFarmingToken')
 const ERC20Mock = artifacts.require('ERC20Mock')
 const truffleAssert = require('truffle-assertions')
 const { expectRevert, time } = require('@openzeppelin/test-helpers')
 const { expect } = require('chai')
+const { BN } = require('@openzeppelin/test-helpers/src/setup')
 
 function timeout (ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
@@ -12,8 +14,9 @@ function timeout (ms) {
 contract('YieldFarming', (accounts) => {
   const [firstAccount, secondAccount] = accounts
   const TIMEOUT = 2
+  const INITIAL_BALANCE = new BN(1000)
   beforeEach(async () => {
-    this.eRC20Mock = await ERC20Mock.new('ERC20Mock name', 'ERC20Mock symbol', firstAccount, 1E9)
+    this.acceptedToken = await ERC20Mock.new('ERC20Mock name', 'ERC20Mock symbol', firstAccount, INITIAL_BALANCE)
     const tokenName = 'A token name'
     const tokenSymbol = 'A token symbol'
     const rewardCalculator = await RewardCalculator.new()
@@ -21,7 +24,7 @@ contract('YieldFarming', (accounts) => {
     const multiplier = '0x3FFF71547652B82FE1777D0FFDA0D23A'
     const lockTime = time.duration.seconds(TIMEOUT)
     this.yieldFarming = await YieldFarming.new(
-      this.eRC20Mock.address,
+      this.acceptedToken.address,
       rewardCalculator.address,
       tokenName,
       tokenSymbol,
@@ -29,6 +32,7 @@ contract('YieldFarming', (accounts) => {
       multiplier,
       lockTime
     )
+    this.yieldFarmingToken = await YieldFarmingToken.at(await this.yieldFarming.yieldFarmingToken.call())
   })
   it('Ownership', async () => {
     const firstOwner = await this.yieldFarming.owner()
@@ -43,7 +47,7 @@ contract('YieldFarming', (accounts) => {
   describe('Release token', async () => {
     describe('without deposit', async () => {
       // beforeEach(async () => {
-      //   const depositValue = 1E9
+      //   const depositValue = INITIAL_BALANCE
       //   await this.yieldFarming.deposit(depositValue, { from: firstAccount })
       // })
       it('try release', async () => {
@@ -60,10 +64,9 @@ contract('YieldFarming', (accounts) => {
       })
     })
     describe('with deposit', async () => {
-      let depositValue
       beforeEach(async () => {
-        depositValue = 1E9
-        await this.eRC20Mock.approveInternal(firstAccount, this.yieldFarming.address, depositValue)
+        const depositValue = INITIAL_BALANCE
+        await this.acceptedToken.increaseAllowance(this.yieldFarming.address, depositValue)
         await this.yieldFarming.deposit(depositValue, { from: firstAccount })
       })
       // it.only('can withdraw payment', async () => {
@@ -85,6 +88,21 @@ contract('YieldFarming', (accounts) => {
         await timeout(TIMEOUT * 1000)
         await this.yieldFarming.releaseTokens()
       })
+    })
+  })
+  describe('Burn token', async () => {
+    let burnValue
+    beforeEach(async () => {
+      const depositValue = INITIAL_BALANCE
+      await this.acceptedToken.increaseAllowance(this.yieldFarming.address, depositValue)
+      await this.yieldFarming.deposit(depositValue, { from: firstAccount })
+      burnValue = new BN(1)
+      await timeout(TIMEOUT * 1000)
+      await this.yieldFarming.releaseTokens()
+      await this.yieldFarmingToken.increaseAllowance(this.yieldFarming.address, burnValue)
+    })
+    it('here', async () => {
+      await this.yieldFarming.burn(burnValue)
     })
   })
 })
