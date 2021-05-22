@@ -3,7 +3,7 @@ const YieldFarming = artifacts.require('YieldFarming')
 const YieldFarmingToken = artifacts.require('YieldFarmingToken')
 const ERC20Mock = artifacts.require('ERC20Mock')
 const truffleAssert = require('truffle-assertions')
-const { expectRevert, time } = require('@openzeppelin/test-helpers')
+const { expectRevert, time, expectEvent } = require('@openzeppelin/test-helpers')
 const { expect } = require('chai')
 const { BN } = require('@openzeppelin/test-helpers/src/setup')
 
@@ -43,6 +43,17 @@ contract('YieldFarming', (accounts) => {
     }, 'OwnershipTransferred should be emitted with correct parameters')
     const secondOwner = await this.yieldFarming.owner()
     expect(secondOwner).to.equal(secondAccount)
+  })
+  describe('Deposit', async () => {
+    let depositValue
+    beforeEach(async () => {
+      depositValue = INITIAL_BALANCE
+      await this.acceptedToken.increaseAllowance(this.yieldFarming.address, depositValue)
+    })
+    it('Emit AcceptedTokenDeposit', async () => {
+      const { logs } = await this.yieldFarming.deposit(depositValue, { from: firstAccount })
+      expectEvent.inLogs(logs, 'AcceptedTokenDeposit', { messageSender: firstAccount, amount: depositValue })
+    })
   })
   describe('Release token', async () => {
     describe('without deposit', async () => {
@@ -84,9 +95,15 @@ contract('YieldFarming', (accounts) => {
           'TokenTimelock: current time is before release time'
         )
       })
-      it('after unlock', async () => {
-        await timeout(TIMEOUT * 1000)
-        await this.yieldFarming.releaseTokens()
+      describe('after unlock', async () => {
+        beforeEach(async () => {
+          await timeout(TIMEOUT * 1000)
+        })
+        it('Emit YieldFarmingTokenRelease', async () => {
+          const releaseValue = new BN(1442)
+          const { logs } = await this.yieldFarming.releaseTokens()
+          expectEvent.inLogs(logs, 'YieldFarmingTokenRelease', { releaser: firstAccount, amount: releaseValue })
+        })
       })
     })
   })
@@ -101,8 +118,9 @@ contract('YieldFarming', (accounts) => {
       await this.yieldFarming.releaseTokens()
       await this.yieldFarmingToken.increaseAllowance(this.yieldFarming.address, burnValue)
     })
-    it('here', async () => {
-      await this.yieldFarming.burn(burnValue)
+    it('Emit YieldFarmingTokenBurn', async () => {
+      const { logs } = await this.yieldFarming.burn(burnValue)
+      expectEvent.inLogs(logs, 'YieldFarmingTokenBurn', { burner: firstAccount, amount: burnValue })
     })
   })
 })

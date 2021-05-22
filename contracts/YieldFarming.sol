@@ -13,7 +13,8 @@ contract YieldFarming is Ownable {
     using SafeERC20 for IERC20;
 
     event AcceptedTokenDeposit(address messageSender, uint amount);
-    event YieldFarmingTokenBurn(address messageSender, uint amount);
+    event YieldFarmingTokenBurn(address burner, uint amount);
+    event YieldFarmingTokenRelease(address releaser, uint amount);
 
     RewardCalculator immutable private rewardCalculator;
     YieldFarmingToken immutable public yieldFarmingToken;
@@ -54,16 +55,16 @@ contract YieldFarming is Ownable {
     }
 
     function burn(uint amount) public {
-        address messageSender = _msgSender();
+        address burner = _msgSender();
         // // Original implementation:
-        // yieldFarmingToken.safeTransferFrom(messageSender, address(this), amount);
+        // yieldFarmingToken.safeTransferFrom(burner, address(this), amount);
         // yieldFarmingToken.safeIncreaseAllowance(address(this), amount);
         // yieldFarmingToken.burn(amount);
         
         // Optimized implementation:
-        yieldFarmingToken.burnFrom(messageSender, amount);
+        yieldFarmingToken.burnFrom(burner, amount);
         
-        emit YieldFarmingTokenBurn(messageSender, amount);
+        emit YieldFarmingTokenBurn(burner, amount);
     }
 
     function getMyTokenTimelock() public view returns (TokenTimelock) {
@@ -73,6 +74,10 @@ contract YieldFarming is Ownable {
     }
 
     function releaseTokens() public {
-        getMyTokenTimelock().release();
+        address releaser = _msgSender();
+        TokenTimelock tokenTimelock = getMyTokenTimelock();
+        uint amount = yieldFarmingToken.balanceOf(address(tokenTimelock));
+        tokenTimelock.release();
+        emit YieldFarmingTokenRelease(releaser, amount);
     }
 }
