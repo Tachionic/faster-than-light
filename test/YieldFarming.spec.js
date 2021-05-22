@@ -100,7 +100,7 @@ contract('YieldFarming', (accounts) => {
           await timeout(TIMEOUT * 1000)
         })
         it('Emit YieldFarmingTokenRelease', async () => {
-          const releaseValue = new BN(1442)
+          const releaseValue = new BN(1443)
           const { logs } = await this.yieldFarming.releaseTokens()
           expectEvent.inLogs(logs, 'YieldFarmingTokenRelease', { releaser: firstAccount, amount: releaseValue })
         })
