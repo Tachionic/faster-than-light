@@ -3,9 +3,8 @@ const YieldFarming = artifacts.require('YieldFarming')
 const YieldFarmingToken = artifacts.require('YieldFarmingToken')
 const ERC20Mock = artifacts.require('ERC20Mock')
 const truffleAssert = require('truffle-assertions')
-const { expectRevert, time, expectEvent } = require('@openzeppelin/test-helpers')
+const { expectRevert, time, expectEvent, BN } = require('@openzeppelin/test-helpers')
 const { expect } = require('chai')
-const { BN } = require('@openzeppelin/test-helpers/src/setup')
 
 function timeout (ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
