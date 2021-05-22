@@ -20,7 +20,7 @@ contract('YieldFarming', (accounts) => {
     const tokenSymbol = 'A token symbol'
     const rewardCalculator = await RewardCalculator.new()
     const interestRate = '0x3FFF71547652B82FE1777D0FFDA0D23A' // logBase2(e) in IEEE 754 quadruple float representation
-    const multiplier = '0x3FFF71547652B82FE1777D0FFDA0D23A'
+    const multiplier = '0x3FFE62E42FEFA39EF35793C7673007E5' // ln(2) in IEEE 754 quadruple float representation
     const lockTime = time.duration.seconds(TIMEOUT)
     this.yieldFarming = await YieldFarming.new(
       this.acceptedToken.address,
@@ -99,7 +99,7 @@ contract('YieldFarming', (accounts) => {
           await timeout(TIMEOUT * 1000)
         })
         it('Emit YieldFarmingTokenRelease', async () => {
-          const releaseValue = new BN(1443)
+          const releaseValue = new BN(693)
           const { logs } = await this.yieldFarming.releaseTokens()
           expectEvent.inLogs(logs, 'YieldFarmingTokenRelease', { releaser: firstAccount, amount: releaseValue })
         })
