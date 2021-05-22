@@ -16,3 +16,11 @@ exit_ganache(){
     kill $GANACHE_PID
     echo 🧁🛑 Ganache exited❕    
 }
+
+get_address(){
+    local input_file=$1
+    local account_number=$2
+    # echo $contractName
+    local CMD="{ grep -m1 'Available Accounts' ; grep -m1 '($account_number)' ; } < $input_file | grep -oP '0x.*(?= \(\d* ETH\))'"
+    address=`eval "$CMD"`
+}

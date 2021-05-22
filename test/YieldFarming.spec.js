@@ -1,4 +1,6 @@
+const RewardCalculator = artifacts.require('RewardCalculator')
 const YieldFarming = artifacts.require('YieldFarming')
+const ERC20Mock = artifacts.require('ERC20Mock')
 const truffleAssert = require('truffle-assertions')
 const { expectRevert, time } = require('@openzeppelin/test-helpers')
 const { expect } = require('chai')
@@ -11,13 +13,22 @@ contract('YieldFarming', (accounts) => {
   const [firstAccount, secondAccount] = accounts
   const TIMEOUT = 2
   beforeEach(async () => {
+    this.eRC20Mock = await ERC20Mock.new('ERC20Mock name', 'ERC20Mock symbol', firstAccount, 1E9)
     const tokenName = 'A token name'
     const tokenSymbol = 'A token symbol'
+    const rewardCalculator = await RewardCalculator.new()
     const interestRate = '0x3FFF71547652B82FE1777D0FFDA0D23A'
     const multiplier = '0x3FFF71547652B82FE1777D0FFDA0D23A'
-    // const lockTime = time.duration.days(1)
     const lockTime = time.duration.seconds(TIMEOUT)
-    this.yieldFarming = await YieldFarming.new(tokenName, tokenSymbol, interestRate, multiplier, lockTime)
+    this.yieldFarming = await YieldFarming.new(
+      this.eRC20Mock.address,
+      rewardCalculator.address,
+      tokenName,
+      tokenSymbol,
+      interestRate,
+      multiplier,
+      lockTime
+    )
   })
   it('Ownership', async () => {
     const firstOwner = await this.yieldFarming.owner()
@@ -32,8 +43,8 @@ contract('YieldFarming', (accounts) => {
   describe('Release token', async () => {
     describe('without deposit', async () => {
       // beforeEach(async () => {
-      //   const value = 10000000000000
-      //   await this.yieldFarming.deposit({ from: firstAccount, value })
+      //   const depositValue = 1E9
+      //   await this.yieldFarming.deposit(depositValue, { from: firstAccount })
       // })
       it('try release', async () => {
         await expectRevert(
@@ -49,10 +60,20 @@ contract('YieldFarming', (accounts) => {
       })
     })
     describe('with deposit', async () => {
+      let depositValue
       beforeEach(async () => {
-        const value = 10000000000000
-        await this.yieldFarming.deposit({ from: firstAccount, value })
+        depositValue = 1E9
+        await this.eRC20Mock.approveInternal(firstAccount, this.yieldFarming.address, depositValue)
+        await this.yieldFarming.deposit(depositValue, { from: firstAccount })
       })
+      // it.only('can withdraw payment', async () => {
+      //   expect(await this.yieldFarming.payments(firstAccount)).to.be.bignumber.equal(depositValue);
+
+      //   await this.yieldFarming.withdrawPayments(firstAccount);
+
+      //   expect(await balanceTracker.delta()).to.be.bignumber.equal(depositValue);
+      //   expect(await this.yieldFarming.payments(firstAccount)).to.be.bignumber.equal('0');
+      // });
       it('before unlock', async () => {
         // await timeout(TIMEOUT*1000)
         await expectRevert(

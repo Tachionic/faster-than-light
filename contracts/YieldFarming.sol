@@ -3,16 +3,20 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/TokenTimelock.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./abdk-libraries-solidity/ABDKMathQuad.sol";
 import "./YieldFarmingToken.sol";
+import "./RewardCalculator.sol";
 
 contract YieldFarming is Ownable {
     using SafeERC20 for YieldFarmingToken;
-    using ABDKMathQuad for bytes16;
+    using SafeERC20 for IERC20;
 
+    event AcceptedTokenDeposit(address messageSender, uint amount);
+
+    RewardCalculator immutable private rewardCalculator;
     YieldFarmingToken immutable private token;
-    bytes16 private immutable oneDay;
+    IERC20 immutable private acceptedToken;
     bytes16 private interestRate;
     bytes16 private multiplier;
     uint private lockTime;
@@ -20,10 +24,11 @@ contract YieldFarming is Ownable {
 
     mapping(address => TokenTimelock) private tokenTimeLocks;
 
-    constructor(string memory _tokenName, string memory _tokenSymbol, bytes16 _interestRate, bytes16 _multiplier, uint _lockTime){
-        oneDay = ABDKMathQuad.fromUInt(1 days);
+    constructor(IERC20 _acceptedToken, RewardCalculator _rewardCalculator, string memory _tokenName, string memory _tokenSymbol, bytes16 _interestRate, bytes16 _multiplier, uint _lockTime){
         updateTokenomics(_interestRate, _multiplier, _lockTime);
         token = new YieldFarmingToken(_tokenName, _tokenSymbol);
+        rewardCalculator = _rewardCalculator;
+        acceptedToken = _acceptedToken;
     }
 
     function updateTokenomics(bytes16 _newInterestRate, bytes16 _newMultiplier, uint _newLockTime) public onlyOwner{
@@ -34,22 +39,16 @@ contract YieldFarming is Ownable {
         tokenomicsTimestamp = block.timestamp;
     }
 
-    function deposit() public payable {
+    function deposit(uint amount) public {
+        address messageSender = _msgSender();
+        acceptedToken.safeTransferFrom(messageSender, address(this), amount);
+        emit AcceptedTokenDeposit(messageSender, amount);
         // solhint-disable-next-line not-rely-on-time
-        TokenTimelock tokenTimeLock = new TokenTimelock(token, _msgSender(), block.timestamp + lockTime);
-        tokenTimeLocks[_msgSender()] = tokenTimeLock;
-        token.mint(address(tokenTimeLock),
-            multiplier.mul(ABDKMathQuad.fromUInt(msg.value))
-            .div(
-                ABDKMathQuad.fromUInt(1)
-                .add(interestRate)
-                .pow(
-                    // solhint-disable-next-line not-rely-on-time
-                    ABDKMathQuad.fromUInt(block.timestamp - tokenomicsTimestamp)
-                    .div(oneDay)
-                )
-            )
-            .toUInt()
+        TokenTimelock tokenTimeLock = new TokenTimelock(token, messageSender, block.timestamp + lockTime);
+        tokenTimeLocks[messageSender] = tokenTimeLock;
+        token.mint(
+            address(tokenTimeLock),
+            rewardCalculator.calculateQuantity(amount, multiplier, interestRate, tokenomicsTimestamp)
         );
     }
 
