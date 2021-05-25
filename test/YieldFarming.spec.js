@@ -1,6 +1,7 @@
 const RewardCalculator = artifacts.require('RewardCalculator')
 const YieldFarming = artifacts.require('YieldFarming')
 const YieldFarmingToken = artifacts.require('YieldFarmingToken')
+const ABDKMathQuad = artifacts.require('ABDKMathQuad')
 const ERC20Mock = artifacts.require('ERC20Mock')
 const truffleAssert = require('truffle-assertions')
 const { expectRevert, time, expectEvent, BN } = require('@openzeppelin/test-helpers')
@@ -12,15 +13,20 @@ function timeout (ms) {
 
 contract('YieldFarming', (accounts) => {
   const [firstAccount, secondAccount] = accounts
-  const TIMEOUT = 2
+  const TIMEOUT = 1.5
   const INITIAL_BALANCE = new BN(1000)
   beforeEach(async () => {
     this.acceptedToken = await ERC20Mock.new('ERC20Mock name', 'ERC20Mock symbol', firstAccount, INITIAL_BALANCE)
     const tokenName = 'A token name'
     const tokenSymbol = 'A token symbol'
+    this.aBDKMath = await ABDKMathQuad.new()
+    RewardCalculator.link('ABDKMathQuad', this.aBDKMath.address)
     const rewardCalculator = await RewardCalculator.new()
-    const interestRate = '0x3FFF71547652B82FE1777D0FFDA0D23A' // logBase2(e) in IEEE 754 quadruple float representation
-    const multiplier = '0x3FFE62E42FEFA39EF35793C7673007E5' // ln(2) in IEEE 754 quadruple float representation
+    const interestRate = await this.aBDKMath.div(
+      await this.aBDKMath.fromInt(new BN(25)),
+      await this.aBDKMath.fromInt(new BN(10000))
+    )
+    const multiplier = await this.aBDKMath.fromInt(new BN(1E12))
     const lockTime = time.duration.seconds(TIMEOUT)
     this.yieldFarming = await YieldFarming.new(
       this.acceptedToken.address,
@@ -31,7 +37,7 @@ contract('YieldFarming', (accounts) => {
       multiplier,
       lockTime
     )
-    this.yieldFarmingToken = await YieldFarmingToken.at(await this.yieldFarming.yieldFarmingToken.call())
+    this.yieldFarmingToken = await YieldFarmingToken.at(await this.yieldFarming.yieldFarmingToken())
   })
   it('Ownership', async () => {
     const firstOwner = await this.yieldFarming.owner()
@@ -99,7 +105,7 @@ contract('YieldFarming', (accounts) => {
           await timeout(TIMEOUT * 1000)
         })
         it('Emit YieldFarmingTokenRelease', async () => {
-          const releaseValue = new BN(693)
+          const releaseValue = new BN(1000000000000000)
           const { logs } = await this.yieldFarming.releaseTokens()
           expectEvent.inLogs(logs, 'YieldFarmingTokenRelease', { releaser: firstAccount, amount: releaseValue })
         })

@@ -37,20 +37,19 @@ contract YieldFarming is Ownable {
         interestRate = _newInterestRate;
         multiplier = _newMultiplier;
         lockTime = _newLockTime;
-        // solhint-disable-next-line not-rely-on-time
-        tokenomicsTimestamp = block.timestamp;
+        tokenomicsTimestamp = getTime();
     }
 
     function deposit(uint amount) public {
         address messageSender = _msgSender();
         acceptedToken.safeTransferFrom(messageSender, address(this), amount);
         emit AcceptedTokenDeposit(messageSender, amount);
-        // solhint-disable-next-line not-rely-on-time
-        TokenTimelock tokenTimeLock = new TokenTimelock(yieldFarmingToken, messageSender, block.timestamp + lockTime);
+        uint timestamp = getTime();
+        TokenTimelock tokenTimeLock = new TokenTimelock(yieldFarmingToken, messageSender, timestamp + lockTime);
         tokenTimeLocks[messageSender] = tokenTimeLock;
         yieldFarmingToken.mint(
             address(tokenTimeLock),
-            rewardCalculator.calculateQuantity(amount, multiplier, interestRate, tokenomicsTimestamp)
+            rewardCalculator.calculateQuantity(amount, multiplier, interestRate, timestamp, tokenomicsTimestamp)
         );
     }
 
@@ -79,5 +78,11 @@ contract YieldFarming is Ownable {
         uint amount = yieldFarmingToken.balanceOf(address(tokenTimelock));
         tokenTimelock.release();
         emit YieldFarmingTokenRelease(releaser, amount);
+    }
+    function getTime() internal view returns (uint256) {
+        // current block timestamp as seconds since unix epoch
+        // ref: https://solidity.readthedocs.io/en/v0.5.7/units-and-global-variables.html#block-and-transaction-properties
+        // solhint-disable-next-line not-rely-on-time
+        return block.timestamp;
     }
 }
