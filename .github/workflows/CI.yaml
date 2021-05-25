@@ -30,8 +30,6 @@ jobs:
       - id: yarn-cache
         run: echo "::set-output name=dir::$(yarn cache dir)"
       - uses: actions/cache@v1
-        env:
-          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
         with:
           path: ${{ steps.yarn-cache.outputs.dir }}
           key: ${{ matrix.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
@@ -42,4 +40,4 @@ jobs:
       - run: yarn solhint
       - run: yarn lint
       - run: yarn test
-      - run: yarn coveralls
+      - run: COVERALLS_REPO_TOKEN=${{ secrets.COVERALLS_REPO_TOKEN }} yarn coveralls
