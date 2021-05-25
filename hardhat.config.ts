@@ -6,6 +6,7 @@ require('@nomiclabs/hardhat-solhint');
 require("@nomiclabs/hardhat-ethers");
 require('solidity-coverage');
 require('hardhat-gas-reporter');
+require("@nomiclabs/hardhat-waffle");
 
 for (const f of fs.readdirSync(path.join(__dirname, 'hardhat'))) {
   require(path.join(__dirname, 'hardhat', f));

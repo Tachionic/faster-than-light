@@ -1,9 +1,7 @@
-import { MockProvider, deployContract, link, deployMockContract} from 'ethereum-waffle'
+import { deployContract, deployMockContract} from 'ethereum-waffle'
 import { waffleChai } from '@ethereum-waffle/chai'
-// import {ethers, waffle} from 'hardhat'
-import {ethers} from 'hardhat'
+import { ethers, waffle } from 'hardhat'
 import { use, expect } from 'chai'
-// import { Contract, ContractFactory, utils, Wallet } from 'ethers'
 import { accounts, contract } from '@openzeppelin/test-environment'
 // eslint-disable-next-line no-unused-vars
 import { time, BN } from '@openzeppelin/test-helpers'
@@ -11,7 +9,7 @@ const ERC20Mock = contract.fromArtifact('ERC20Mock')
 // const YieldFarming = contract.fromArtifact('YieldFarming')
 const ABDKMathQuad = contract.fromArtifact('ABDKMathQuad')
 const Timestamp = contract.fromArtifact('Timestamp')
-const RewardCalculator = contract.fromArtifact('RewardCalculator')
+// const RewardCalculator = contract.fromArtifact('RewardCalculator')
 use(waffleChai)
 
 describe('YieldFarming', () => {
@@ -19,8 +17,7 @@ describe('YieldFarming', () => {
   const INITIAL_BALANCE = 1000
   it('Ownership', async () => {
     // eslint-disable-next-line no-unused-vars
-    const [sender, _] = new MockProvider().getWallets()
-    // const [sender, _] = new waffle.MockProvider().getWallets()
+    const [sender, _] = waffle.provider.getWallets()
     const timestampMock = await deployMockContract(sender, Timestamp.abi)
     await timestampMock.mock.getTimestamp.returns(1)
     expect(await timestampMock.getTimestamp()).to.be.bignumber.equal(1)
