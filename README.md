@@ -1,6 +1,7 @@
 # Faster Than Light smart contracts
 [![CI](https://github.com/TachyonicFinance/faster-than-light/actions/workflows/CI.yaml/badge.svg)](https://github.com/TachyonicFinance/faster-than-light/actions/workflows/CI.yaml)
 [![Coverage Status](https://coveralls.io/repos/github/TachyonicFinance/faster-than-light/badge.svg?branch=master)](https://coveralls.io/github/TachyonicFinance/faster-than-light?branch=master)
+[![GitHub license](https://img.shields.io/github/license/TachyonicFinance/faster-than-light)](https://github.com/TachyonicFinance/faster-than-light)
 
 ## 🚧 Development
 
