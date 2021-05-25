@@ -9,6 +9,9 @@
   "devDependencies": {
     "@codechecks/client": "^0.1.10",
     "@ethereum-waffle/mock-contract": "^3.2.2",
+    "@nomiclabs/hardhat-solhint": "^2.0.0",
+    "@nomiclabs/hardhat-truffle5": "^2.0.0",
+    "@nomiclabs/hardhat-web3": "^2.0.0",
     "@openzeppelin/test-environment": "^0.1.9",
     "@openzeppelin/test-helpers": "^0.5.11",
     "chai": "^4.3.4",
@@ -25,6 +28,7 @@
     "ethers": "^5.2.0",
     "ganache-cli": "^6.12.2",
     "hardhat": "^2.3.0",
+    "hardhat-gas-reporter": "^1.0.4",
     "husky": "^6.0.0",
     "solhint": "^3.3.4",
     "solidity-coverage": "^0.7.16",

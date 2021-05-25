@@ -1,30 +1,55 @@
-import { MockProvider } from '@ethereum-waffle/provider'
+import { MockProvider, deployContract, link} from 'ethereum-waffle'
 import { use, expect } from 'chai'
 // import { Contract, ContractFactory, utils, Wallet } from 'ethers'
 import { deployMockContract } from '@ethereum-waffle/mock-contract'
-import { /* accounts, */ contract } from '@openzeppelin/test-environment'
+import { accounts, contract } from '@openzeppelin/test-environment'
 import { waffleChai } from '@ethereum-waffle/chai'
+import {Contract} from 'ethers';
 // eslint-disable-next-line no-unused-vars
-import { BN } from '@openzeppelin/test-helpers'
+import { time, BN } from '@openzeppelin/test-helpers'
+const ERC20Mock = contract.fromArtifact('ERC20Mock')
 // const YieldFarming = contract.fromArtifact('YieldFarming')
-// const ABDKMathQuad = contract.fromArtifact('ABDKMathQuad')
-// const TokenTimeLock = contract.fromArtifact('TokenTimeLock')
+const ABDKMathQuad = contract.fromArtifact('ABDKMathQuad')
 const Timestamp = contract.fromArtifact('Timestamp')
+const RewardCalculator = contract.fromArtifact('RewardCalculator')
 use(waffleChai)
-// use(require('chai-bignumber')())
 
 describe('YieldFarming', () => {
-  // const [owner] = accounts
+  const [firstAccount] = accounts
+  const INITIAL_BALANCE = 1000
   it('Ownership', async () => {
     // eslint-disable-next-line no-unused-vars
     const [sender, _] = new MockProvider().getWallets()
-    // const aBDKMath = await ABDKMathQuad.new()
-    // const yieldFarmingMock = await deployMockContract(sender, YieldFarming.abi);
-    // await yieldFarmingMock.mock.getTime.returns('1')
     const timestampMock = await deployMockContract(sender, Timestamp.abi)
     await timestampMock.mock.getTimestamp.returns(1)
     expect(await timestampMock.getTimestamp()).to.be.bignumber.equal(1)
-    // assert(true)
+    this.acceptedToken = await deployContract(sender, ERC20Mock, ['ERC20Mock name', 'ERC20Mock symbol', firstAccount, INITIAL_BALANCE])
+    // this.aBDKMath = ABDKMathQuad.new()
+    const aBDKMath = await deployContract(sender, ABDKMathQuad)
+    link(
+      RewardCalculator,
+      '../contracts/abdk-libraries-solidity/ABDKMathQuad.sol:ABDKMathQuad',
+      aBDKMath.address)
+    // const rewardCalculator = await deployContract(sender, RewardCalculator);
+    // const tokenName = 'A token name'
+    // const tokenSymbol = 'A token symbol'
+    // const interestRate = await this.aBDKMath.div(
+    //   await this.aBDKMath.fromInt(new BN(25)),
+    //   await this.aBDKMath.fromInt(new BN(10000))
+    // )
+    // const multiplier = await this.aBDKMath.fromInt(new BN(1E12))
+    // const lockTime = time.duration.seconds(TIMEOUT)
+    // this.yieldFarming = await YieldFarming.new(
+    //   timestampMock.address,
+    //   this.acceptedToken.address,
+    //   rewardCalculator.address,
+    //   tokenName,
+    //   tokenSymbol,
+    //   interestRate,
+    //   multiplier,
+    //   lockTime
+    // )
+    // this.yieldFarmingToken = await YieldFarmingToken.at(await this.yieldFarming.yieldFarmingToken())
   })
 })
 
