@@ -35,13 +35,11 @@ jobs:
           key: ${{ matrix.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
             ${{ matrix.os }}-yarn-
-    - name: Make test-coverage
-      run: |
-        yarn
-        yarn solhint
-        yarn lint
-        yarn coverage
-    - name: Coveralls
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: yarn
+      - run: yarn solhint
+      - run: yarn lint
+      - run: yarn coverage
+      - uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
