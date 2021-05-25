@@ -2,6 +2,7 @@ const RewardCalculator = artifacts.require('RewardCalculator')
 const YieldFarming = artifacts.require('YieldFarming')
 const ERC20Mock = artifacts.require('ERC20Mock')
 const ABDKMathQuad = artifacts.require('ABDKMathQuad')
+const Timestamp = artifacts.require('Timestamp')
 const { time } = require('@openzeppelin/test-helpers')
 
 module.exports = async (deployer, network, accounts) => {
@@ -12,6 +13,8 @@ module.exports = async (deployer, network, accounts) => {
   const interestRate = '0x3FFF71547652B82FE1777D0FFDA0D23A'
   const multiplier = '0x3FFF71547652B82FE1777D0FFDA0D23A'
   const lockTime = time.duration.days(1)
+  await deployer.deploy(Timestamp)
+  const timestamp = await Timestamp.deployed()
   await deployer.deploy(ABDKMathQuad)
   const aBDKMathQuad = await ABDKMathQuad.deployed()
   RewardCalculator.link('ABDKMathQuad', aBDKMathQuad.address)
@@ -19,6 +22,7 @@ module.exports = async (deployer, network, accounts) => {
   const rewardCalculator = await RewardCalculator.deployed()
   await deployer.deploy(
     YieldFarming,
+    timestamp.address,
     eRC20Mock.address,
     rewardCalculator.address,
     tokenName,

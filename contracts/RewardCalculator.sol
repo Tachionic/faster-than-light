@@ -14,13 +14,13 @@ contract RewardCalculator{
         half = ABDKMathQuad.fromUInt(1).div(ABDKMathQuad.fromUInt(2));
     }
 
-    function calculateQuantity(uint inputValue, bytes16 multiplier, bytes16 interestRate, uint timestamp, uint tokenomicsTimestamp) public view returns(uint){
+    function calculateQuantity(uint inputValue, bytes16 multiplier, bytes16 interestRate, uint elapsedTime) public view returns(uint){
         return multiplier.mul(ABDKMathQuad.fromUInt(inputValue))
         .div(
             ABDKMathQuad.fromUInt(1)
             .add(interestRate)
             .pow(
-                ABDKMathQuad.fromUInt(timestamp - tokenomicsTimestamp)
+                ABDKMathQuad.fromUInt(elapsedTime)
                 .div(oneDay)
             )
         )
