@@ -1,5 +1,5 @@
 # Faster Than Light smart contracts
-[![Coverage Status](https://coveralls.io/repos/github/TachyonicFinance/faster-than-light/badge.svg?branch=development)](https://coveralls.io/github/TachyonicFinance/faster-than-light?branch=development)
+[![Coverage Status](https://coveralls.io/repos/github/TachyonicFinance/faster-than-light/badge.svg?branch=master)](https://coveralls.io/github/TachyonicFinance/faster-than-light?branch=master)
 
 ## 🚧 Development
 
