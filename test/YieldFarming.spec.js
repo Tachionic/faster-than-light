@@ -1,4 +1,3 @@
-import { deployContract, deployMockContract} from 'ethereum-waffle'
 import { waffleChai } from '@ethereum-waffle/chai'
 import { ethers, waffle } from 'hardhat'
 import { use, expect } from 'chai'
@@ -18,12 +17,12 @@ describe('YieldFarming', () => {
   it('Ownership', async () => {
     // eslint-disable-next-line no-unused-vars
     const [sender, _] = waffle.provider.getWallets()
-    const timestampMock = await deployMockContract(sender, Timestamp.abi)
+    const timestampMock = await waffle.deployMockContract(sender, Timestamp.abi)
     await timestampMock.mock.getTimestamp.returns(1)
     expect(await timestampMock.getTimestamp()).to.be.bignumber.equal(1)
-    this.acceptedToken = await deployContract(sender, ERC20Mock, ['ERC20Mock name', 'ERC20Mock symbol', firstAccount, INITIAL_BALANCE])
+    this.acceptedToken = await waffle.deployContract(sender, ERC20Mock, ['ERC20Mock name', 'ERC20Mock symbol', firstAccount, INITIAL_BALANCE])
     // this.aBDKMath = ABDKMathQuad.new()
-    this.aBDKMath = await deployContract(sender, ABDKMathQuad)
+    this.aBDKMath = await waffle.deployContract(sender, ABDKMathQuad)
     const contractFactory = await ethers.getContractFactory(
       "RewardCalculator",
       {
