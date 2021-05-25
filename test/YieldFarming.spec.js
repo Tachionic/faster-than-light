@@ -1,10 +1,10 @@
-import { MockProvider, deployContract, link} from 'ethereum-waffle'
+import { MockProvider, deployContract, link, deployMockContract} from 'ethereum-waffle'
+import { waffleChai } from '@ethereum-waffle/chai'
+// import {ethers, waffle} from 'hardhat'
+import {ethers} from 'hardhat'
 import { use, expect } from 'chai'
 // import { Contract, ContractFactory, utils, Wallet } from 'ethers'
-import { deployMockContract } from '@ethereum-waffle/mock-contract'
 import { accounts, contract } from '@openzeppelin/test-environment'
-import { waffleChai } from '@ethereum-waffle/chai'
-import {Contract} from 'ethers';
 // eslint-disable-next-line no-unused-vars
 import { time, BN } from '@openzeppelin/test-helpers'
 const ERC20Mock = contract.fromArtifact('ERC20Mock')
@@ -20,16 +20,25 @@ describe('YieldFarming', () => {
   it('Ownership', async () => {
     // eslint-disable-next-line no-unused-vars
     const [sender, _] = new MockProvider().getWallets()
+    // const [sender, _] = new waffle.MockProvider().getWallets()
     const timestampMock = await deployMockContract(sender, Timestamp.abi)
     await timestampMock.mock.getTimestamp.returns(1)
     expect(await timestampMock.getTimestamp()).to.be.bignumber.equal(1)
     this.acceptedToken = await deployContract(sender, ERC20Mock, ['ERC20Mock name', 'ERC20Mock symbol', firstAccount, INITIAL_BALANCE])
     // this.aBDKMath = ABDKMathQuad.new()
-    const aBDKMath = await deployContract(sender, ABDKMathQuad)
-    link(
-      RewardCalculator,
-      '../contracts/abdk-libraries-solidity/ABDKMathQuad.sol:ABDKMathQuad',
-      aBDKMath.address)
+    this.aBDKMath = await deployContract(sender, ABDKMathQuad)
+    const contractFactory = await ethers.getContractFactory(
+      "RewardCalculator",
+      {
+        libraries: {
+          ABDKMathQuad: this.aBDKMath.address
+        }
+      }
+    );
+    // link(
+    //   RewardCalculator,
+    //   '../contracts/abdk-libraries-solidity/ABDKMathQuad.sol:ABDKMathQuad',
+    //   aBDKMath.address)
     // const rewardCalculator = await deployContract(sender, RewardCalculator);
     // const tokenName = 'A token name'
     // const tokenSymbol = 'A token symbol'
