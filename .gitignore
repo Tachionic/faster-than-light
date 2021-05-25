@@ -5,3 +5,5 @@ gasReporterOutput.json
 coverage.json
 coverage/
 .envrc
+artifacts/
+cache/
