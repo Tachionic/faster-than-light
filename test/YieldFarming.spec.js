@@ -219,3 +219,17 @@ describe('YieldFarming B', async () => {
     })
   })
 })
+
+describe('YieldFarming C', () => {
+  let first, timestamp
+  beforeEach(async () => {
+    // eslint-disable-next-line no-unused-vars
+    [first] = waffle.provider.getWallets()
+    timestamp = await waffle.deployContract(first, Timestamp)
+  })
+  it('Timestamp', async () => {
+    const unixTime = Math.floor(Date.now() / 1000)
+    expect(await timestamp.getTimestamp())
+      .to.be.bignumber.to.be.within(unixTime - 1000, unixTime + 1000)
+  })
+})
