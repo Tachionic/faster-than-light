@@ -19,6 +19,10 @@ const enableProduction = process.env.COMPILE_MODE === 'production';
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
+  paths: {
+    sources: "contracts",
+    artifacts: "artifacts"
+  },
   solidity: {
     version: '0.8.0',
     settings: {

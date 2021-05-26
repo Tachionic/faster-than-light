@@ -1,37 +1,40 @@
 import { waffleChai } from '@ethereum-waffle/chai'
 import { ethers, waffle } from 'hardhat'
 import { use, expect } from 'chai'
-import { accounts, contract } from '@openzeppelin/test-environment'
+import { accounts } from '@openzeppelin/test-environment'
 // eslint-disable-next-line no-unused-vars
-import { time, BN } from '@openzeppelin/test-helpers'
-const ERC20Mock = contract.fromArtifact('ERC20Mock')
-const YieldFarming = contract.fromArtifact('YieldFarming')
-const ABDKMathQuad = contract.fromArtifact('ABDKMathQuad')
-const Timestamp = contract.fromArtifact('Timestamp')
-const RewardCalculator = contract.fromArtifact('RewardCalculator')
+import { BN } from '@openzeppelin/test-helpers'
+import ABDKMathQuad from '../artifacts/contracts/abdk-libraries-solidity/ABDKMathQuad.sol/ABDKMathQuad.json'
+import YieldFarming from '../artifacts/contracts/YieldFarming.sol/YieldFarming.json'
+import ERC20Mock from '../artifacts/contracts/ERC20Mock.sol/ERC20Mock.json'
+import Timestamp from '../artifacts/contracts/Timestamp.sol/Timestamp.json'
 use(waffleChai)
 
 describe('YieldFarming', () => {
   const TIMEOUT = 1
   const [firstAccount] = accounts
   const INITIAL_BALANCE = 1000
-  it('Ownership', async () => {
+  beforeEach(async () => {
     // eslint-disable-next-line no-unused-vars
     const [sender, _] = waffle.provider.getWallets()
     const timestampMock = await waffle.deployMockContract(sender, Timestamp.abi)
     await timestampMock.mock.getTimestamp.returns(1)
     expect(await timestampMock.getTimestamp()).to.be.bignumber.equal(1)
-    this.acceptedToken = await waffle.deployContract(sender, ERC20Mock, ['ERC20Mock name', 'ERC20Mock symbol', firstAccount, INITIAL_BALANCE])
+    this.acceptedToken = await waffle.deployContract(sender, ERC20Mock, [
+      'ERC20Mock name',
+      'ERC20Mock symbol',
+      firstAccount,
+      INITIAL_BALANCE])
     this.aBDKMath = await waffle.deployContract(sender, ABDKMathQuad)
-    const rewardCalculator = await ethers.getContractFactory(
-      "RewardCalculator",
+    const RewardCalculator = await ethers.getContractFactory(
+      'RewardCalculator',
       {
         libraries: {
           ABDKMathQuad: this.aBDKMath.address
         }
       }
-    );
-    // const rewardCalculator = await waffle.deployContract(sender, RewardCalculator);
+    )
+    const rewardCalculator = await RewardCalculator.deploy()
     const tokenName = 'A token name'
     const tokenSymbol = 'A token symbol'
     const interestRate = await this.aBDKMath.div(
@@ -39,18 +42,21 @@ describe('YieldFarming', () => {
       await this.aBDKMath.fromInt(10000)
     )
     const multiplier = await this.aBDKMath.fromInt(1E12)
-    const lockTime = time.duration.seconds(TIMEOUT)
-    // this.yieldFarming = await waffle.deployContract(sender, YieldFarming, [
-    //   timestampMock.address,
-    //   this.acceptedToken.address,
-    //   rewardCalculator.address,
-    //   tokenName,
-    //   tokenSymbol,
-    //   interestRate,
-    //   multiplier,
-    //   lockTime
-    // ])
+    const lockTime = TIMEOUT
+    this.yieldFarming = await waffle.deployContract(sender, YieldFarming, [
+      timestampMock.address,
+      this.acceptedToken.address,
+      rewardCalculator.address,
+      tokenName,
+      tokenSymbol,
+      interestRate,
+      multiplier,
+      lockTime
+    ])
     // this.yieldFarmingToken = await YieldFarmingToken.at(await this.yieldFarming.yieldFarmingToken())
+  })
+  it('Ownership', async () => {
+    
   })
 })
 
