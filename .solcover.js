@@ -4,7 +4,8 @@ module.exports = {
     compileCommand: 'npm run compile',
     skipFiles: [
         'abdk-libraries-solidity',
-        'Migrations.sol'
+        'Migrations.sol',
+        'ERC20Mock.sol'
     ],
     providerOptions: {
         default_balance_ether: '10000000000000000000000000',
