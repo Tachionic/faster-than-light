@@ -154,3 +154,68 @@ describe('YieldFarming', () => {
     })
   })
 })
+
+describe('YieldFarming B', async () => {
+  let first, acceptedToken, timestampMock, yieldFarming, aBDKMath
+  const TIMEOUT = 1
+  // const [firstAccount, secondAccount] = accounts
+  const INITIAL_BALANCE = 1000
+  beforeEach(async () => {
+    // eslint-disable-next-line no-unused-vars
+    [first] = waffle.provider.getWallets()
+    timestampMock = await waffle.deployMockContract(first, Timestamp.abi)
+    await timestampMock.mock.getTimestamp.returns(1)
+    expect(await timestampMock.getTimestamp()).to.be.bignumber.equal(1)
+    acceptedToken = await waffle.deployContract(first, ERC20Mock, [
+      'ERC20Mock name',
+      'ERC20Mock symbol',
+      first.address,
+      INITIAL_BALANCE])
+    aBDKMath = await waffle.deployContract(first, ABDKMathQuad)
+    const RewardCalculator = await ethers.getContractFactory(
+      'RewardCalculator',
+      {
+        libraries: {
+          ABDKMathQuad: aBDKMath.address
+        }
+      }
+    )
+    const rewardCalculator = await RewardCalculator.deploy()
+    const tokenName = 'A token name'
+    const tokenSymbol = 'A token symbol'
+    const interestRate = await aBDKMath.div(
+      await aBDKMath.fromInt(25),
+      await aBDKMath.fromInt(10000)
+    )
+    const multiplier = await aBDKMath.fromInt(0)
+    const lockTime = TIMEOUT
+    yieldFarming = await waffle.deployContract(first, YieldFarming, [
+      timestampMock.address,
+      acceptedToken.address,
+      rewardCalculator.address,
+      tokenName,
+      tokenSymbol,
+      interestRate,
+      multiplier,
+      lockTime
+    ])
+  })
+  describe('Release token', async () => {
+    describe('with deposit', async () => {
+      beforeEach(async () => {
+        const depositValue = INITIAL_BALANCE
+        await acceptedToken.increaseAllowance(yieldFarming.address, depositValue)
+        await yieldFarming.deposit(depositValue, { from: first.address })
+      })
+      describe('after unlock', async () => {
+        beforeEach(async () => {
+          await timestampMock.mock.getTimestamp.returns(1 + TIMEOUT)
+        })
+        it('Revert with no tokens to release', async () => {
+          await expect(yieldFarming.releaseTokens())
+            .to.be.revertedWith('TokenTimeLock: no tokens to release')
+        })
+      })
+    })
+  })
+})
