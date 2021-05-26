@@ -15,12 +15,15 @@ describe('YieldFarming', () => {
   const TIMEOUT = 1
   // const [firstAccount, secondAccount] = accounts
   const INITIAL_BALANCE = 1000
+  const DEPLOY_TIMESTAMP = 1
+  const DEPOSIT_TIMESTAMP = DEPLOY_TIMESTAMP + 24 * 60 * 60 // one day later
+  const UNLOCK_TIMESTAMP = DEPOSIT_TIMESTAMP + 24 * 60 * 60 // one day later
   beforeEach(async () => {
     // eslint-disable-next-line no-unused-vars
     [first, second] = waffle.provider.getWallets()
     timestampMock = await waffle.deployMockContract(first, Timestamp.abi)
-    await timestampMock.mock.getTimestamp.returns(1)
-    expect(await timestampMock.getTimestamp()).to.be.bignumber.equal(1)
+    await timestampMock.mock.getTimestamp.returns(DEPLOY_TIMESTAMP)
+    expect(await timestampMock.getTimestamp()).to.be.bignumber.equal(DEPLOY_TIMESTAMP)
     acceptedToken = await waffle.deployContract(first, ERC20Mock, [
       'ERC20Mock name',
       'ERC20Mock symbol',
@@ -73,7 +76,7 @@ describe('YieldFarming', () => {
       await acceptedToken.increaseAllowance(yieldFarming.address, depositValue)
     })
     it('TokenTimeLock: release time is before current time', async () => {
-      await timestampMock.mock.getTimestamp.returns(0)
+      await timestampMock.mock.getTimestamp.returns(DEPLOY_TIMESTAMP - 1)
       try {
         await expect(yieldFarming.deposit(depositValue))
           .to.be.revertedWith('TokenTimeLock: release time is before current time')
@@ -109,6 +112,7 @@ describe('YieldFarming', () => {
       beforeEach(async () => {
         const depositValue = INITIAL_BALANCE
         await acceptedToken.increaseAllowance(yieldFarming.address, depositValue)
+        await timestampMock.mock.getTimestamp.returns(DEPOSIT_TIMESTAMP)
         await yieldFarming.deposit(depositValue, { from: first.address })
       })
       // it.only('can withdraw payment', async () => {
@@ -125,10 +129,10 @@ describe('YieldFarming', () => {
       })
       describe('after unlock', async () => {
         beforeEach(async () => {
-          await timestampMock.mock.getTimestamp.returns(1 + TIMEOUT)
+          await timestampMock.mock.getTimestamp.returns(UNLOCK_TIMESTAMP)
         })
         it('Emit YieldFarmingTokenRelease', async () => {
-          const releaseValue = 1000000000000000
+          const releaseValue = 997506234413965
           await expect(yieldFarming.releaseTokens())
             .to.emit(yieldFarming, 'YieldFarmingTokenRelease')
             .withArgs(first.address, releaseValue)
@@ -143,7 +147,7 @@ describe('YieldFarming', () => {
       await acceptedToken.increaseAllowance(yieldFarming.address, depositValue)
       await yieldFarming.deposit(depositValue)
       burnValue = 1
-      await timestampMock.mock.getTimestamp.returns(1 + TIMEOUT)
+      await timestampMock.mock.getTimestamp.returns(UNLOCK_TIMESTAMP)
       await yieldFarming.releaseTokens()
       await yieldFarmingToken.increaseAllowance(yieldFarming.address, burnValue)
     })
@@ -160,12 +164,14 @@ describe('YieldFarming B', async () => {
   const TIMEOUT = 1
   // const [firstAccount, secondAccount] = accounts
   const INITIAL_BALANCE = 1000
+  const DEPLOY_TIMESTAMP = 1
+  const DEPOSIT_TIMESTAMP = DEPLOY_TIMESTAMP + 24 * 60 * 60 // one day later
   beforeEach(async () => {
     // eslint-disable-next-line no-unused-vars
     [first] = waffle.provider.getWallets()
     timestampMock = await waffle.deployMockContract(first, Timestamp.abi)
-    await timestampMock.mock.getTimestamp.returns(1)
-    expect(await timestampMock.getTimestamp()).to.be.bignumber.equal(1)
+    await timestampMock.mock.getTimestamp.returns(DEPLOY_TIMESTAMP)
+    expect(await timestampMock.getTimestamp()).to.be.bignumber.equal(DEPLOY_TIMESTAMP)
     acceptedToken = await waffle.deployContract(first, ERC20Mock, [
       'ERC20Mock name',
       'ERC20Mock symbol',
@@ -209,7 +215,7 @@ describe('YieldFarming B', async () => {
       })
       describe('after unlock', async () => {
         beforeEach(async () => {
-          await timestampMock.mock.getTimestamp.returns(1 + TIMEOUT)
+          await timestampMock.mock.getTimestamp.returns(DEPOSIT_TIMESTAMP)
         })
         it('Revert with no tokens to release', async () => {
           await expect(yieldFarming.releaseTokens())
