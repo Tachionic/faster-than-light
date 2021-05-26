@@ -13,7 +13,7 @@ contract YieldFarming is Ownable {
     using SafeERC20 for YieldFarmingToken;
     using SafeERC20 for IERC20;
 
-    event AcceptedTokenDeposit(address messageSender, uint amount);
+    event AcceptedTokenDeposit(address depositor, uint amount);
     event YieldFarmingTokenBurn(address burner, uint amount);
     event YieldFarmingTokenRelease(address releaser, uint amount);
 
@@ -44,12 +44,12 @@ contract YieldFarming is Ownable {
     }
 
     function deposit(uint amount) public {
-        address messageSender = _msgSender();
-        acceptedToken.safeTransferFrom(messageSender, address(this), amount);
-        emit AcceptedTokenDeposit(messageSender, amount);
+        address depositor = _msgSender();
+        acceptedToken.safeTransferFrom(depositor, address(this), amount);
+        emit AcceptedTokenDeposit(depositor, amount);
         uint timeStamp = timestamp.getTimestamp();
-        TokenTimeLock tokenTimeLock = new TokenTimeLock(timestamp, yieldFarmingToken, messageSender, timeStamp + lockTime);
-        tokenTimeLocks[messageSender] = tokenTimeLock;
+        TokenTimeLock tokenTimeLock = new TokenTimeLock(timestamp, yieldFarmingToken, depositor, timeStamp + lockTime);
+        tokenTimeLocks[depositor] = tokenTimeLock;
         yieldFarmingToken.mint(
             address(tokenTimeLock),
             rewardCalculator.calculateQuantity(amount, multiplier, interestRate, timeStamp - tokenomicsTimestamp)
