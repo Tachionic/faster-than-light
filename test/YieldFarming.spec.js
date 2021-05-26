@@ -1,7 +1,6 @@
 import { waffleChai } from '@ethereum-waffle/chai'
 import { ethers, waffle } from 'hardhat'
 import { use, expect } from 'chai'
-import { accounts } from '@openzeppelin/test-environment'
 // eslint-disable-next-line no-unused-vars
 import { BN } from '@openzeppelin/test-helpers'
 import ABDKMathQuad from '../artifacts/contracts/abdk-libraries-solidity/ABDKMathQuad.sol/ABDKMathQuad.json'
@@ -12,20 +11,22 @@ use(waffleChai)
 
 describe('YieldFarming', () => {
   const TIMEOUT = 1
-  const [firstAccount] = accounts
+  // const [firstAccount, secondAccount] = accounts
   const INITIAL_BALANCE = 1000
   beforeEach(async () => {
     // eslint-disable-next-line no-unused-vars
-    const [sender, _] = waffle.provider.getWallets()
-    const timestampMock = await waffle.deployMockContract(sender, Timestamp.abi)
+    const [first, second] = waffle.provider.getWallets()
+    this.first = first
+    this.second = second
+    const timestampMock = await waffle.deployMockContract(first, Timestamp.abi)
     await timestampMock.mock.getTimestamp.returns(1)
     expect(await timestampMock.getTimestamp()).to.be.bignumber.equal(1)
-    this.acceptedToken = await waffle.deployContract(sender, ERC20Mock, [
+    this.acceptedToken = await waffle.deployContract(first, ERC20Mock, [
       'ERC20Mock name',
       'ERC20Mock symbol',
-      firstAccount,
+      first.address,
       INITIAL_BALANCE])
-    this.aBDKMath = await waffle.deployContract(sender, ABDKMathQuad)
+    this.aBDKMath = await waffle.deployContract(first, ABDKMathQuad)
     const RewardCalculator = await ethers.getContractFactory(
       'RewardCalculator',
       {
@@ -43,7 +44,7 @@ describe('YieldFarming', () => {
     )
     const multiplier = await this.aBDKMath.fromInt(1E12)
     const lockTime = TIMEOUT
-    this.yieldFarming = await waffle.deployContract(sender, YieldFarming, [
+    this.yieldFarming = await waffle.deployContract(first, YieldFarming, [
       timestampMock.address,
       this.acceptedToken.address,
       rewardCalculator.address,
@@ -56,7 +57,13 @@ describe('YieldFarming', () => {
     // this.yieldFarmingToken = await YieldFarmingToken.at(await this.yieldFarming.yieldFarmingToken())
   })
   it('Ownership', async () => {
-    
+    const firstOwner = await this.yieldFarming.owner()
+    expect(firstOwner).to.equal(this.first.address)
+    await expect(this.yieldFarming.transferOwnership(this.second.address))
+    .to.emit(this.yieldFarming, 'OwnershipTransferred')
+    .withArgs(this.first.address, this.second.address)
+    const secondOwner = await this.yieldFarming.owner()
+    expect(secondOwner).to.equal(this.second.address)
   })
 })
 
