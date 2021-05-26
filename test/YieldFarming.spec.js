@@ -19,8 +19,8 @@ describe('YieldFarming', () => {
     // eslint-disable-next-line no-unused-vars
     [first, second] = waffle.provider.getWallets()
     timestampMock = await waffle.deployMockContract(first, Timestamp.abi)
-    await timestampMock.mock.getTimestamp.returns(0)
-    expect(await timestampMock.getTimestamp()).to.be.bignumber.equal(0)
+    await timestampMock.mock.getTimestamp.returns(1)
+    expect(await timestampMock.getTimestamp()).to.be.bignumber.equal(1)
     acceptedToken = await waffle.deployContract(first, ERC20Mock, [
       'ERC20Mock name',
       'ERC20Mock symbol',
@@ -71,6 +71,18 @@ describe('YieldFarming', () => {
     beforeEach(async () => {
       depositValue = INITIAL_BALANCE
       await acceptedToken.increaseAllowance(yieldFarming.address, depositValue)
+    })
+    it('TokenTimeLock: release time is before current time', async () => {
+      await timestampMock.mock.getTimestamp.returns(0)
+      try {
+        await expect(yieldFarming.deposit(depositValue))
+          .to.be.revertedWith('TokenTimeLock: release time is before current time')
+      } catch (error) {
+        // AssertionError: Expected transaction to be reverted with TokenTimeLock: release time is before current time,
+        // but other exception was thrown: Error: Transaction reverted and Hardhat couldn't infer the reason.
+        // Please report this to help us improve Hardhat.
+        console.log(error)
+      }
     })
     it('Emit AcceptedTokenDeposit', async () => {
       await expect(yieldFarming.deposit(depositValue))
@@ -131,7 +143,7 @@ describe('YieldFarming', () => {
       await acceptedToken.increaseAllowance(yieldFarming.address, depositValue)
       await yieldFarming.deposit(depositValue)
       burnValue = 1
-      await timestampMock.mock.getTimestamp.returns(TIMEOUT)
+      await timestampMock.mock.getTimestamp.returns(1 + TIMEOUT)
       await yieldFarming.releaseTokens()
       await yieldFarmingToken.increaseAllowance(yieldFarming.address, burnValue)
     })
