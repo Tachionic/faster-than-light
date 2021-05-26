@@ -44,7 +44,7 @@
     "test": "node --require esm node_modules/.bin/hardhat test",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
-    "coverage": "truffle run coverage --network coverage",
+    "coverage": "node --require esm node_modules/.bin/hardhat coverage",
     "coveralls": "yarn coverage && cat coverage/lcov.info | coveralls",
     "prepare": "husky install",
     "gas-report": "env ENABLE_GAS_REPORT=1 npm run test"
