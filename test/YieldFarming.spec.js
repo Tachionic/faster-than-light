@@ -4,242 +4,172 @@ import { use, expect } from 'chai'
 // eslint-disable-next-line no-unused-vars
 import { BN } from '@openzeppelin/test-helpers'
 import ABDKMathQuad from '../artifacts/contracts/abdk-libraries-solidity/ABDKMathQuad.sol/ABDKMathQuad.json'
-// import YieldFarmingToken from '../artifacts/contracts/YieldFarmingToken.sol/YieldFarmingToken.json'
 import YieldFarming from '../artifacts/contracts/YieldFarming.sol/YieldFarming.json'
 import ERC20Mock from '../artifacts/contracts/ERC20Mock.sol/ERC20Mock.json'
 import Timestamp from '../artifacts/contracts/Timestamp.sol/Timestamp.json'
 use(waffleChai)
 
-describe('YieldFarming', () => {
-  let first, second, third, acceptedToken, timestampMock, yieldFarming, yieldFarmingToken, aBDKMath
-  const TIMEOUT = 1
-  // const [firstAccount, secondAccount] = accounts
+const mainDeploy = async (_multiplier) => {
   const INITIAL_BALANCE = 1000
   const DEPLOY_TIMESTAMP = 1
   const DEPOSIT_TIMESTAMP = DEPLOY_TIMESTAMP + 24 * 60 * 60 // one day later
   const UNLOCK_TIMESTAMP = DEPOSIT_TIMESTAMP + 24 * 60 * 60 // one day later
-  beforeEach(async () => {
-    // eslint-disable-next-line no-unused-vars
-    [first, second, third] = waffle.provider.getWallets()
-    timestampMock = await waffle.deployMockContract(first, Timestamp.abi)
-    await timestampMock.mock.getTimestamp.returns(DEPLOY_TIMESTAMP)
-    expect(await timestampMock.getTimestamp()).to.be.bignumber.equal(DEPLOY_TIMESTAMP)
-    acceptedToken = await waffle.deployContract(first, ERC20Mock, [
-      'ERC20Mock name',
-      'ERC20Mock symbol',
-      first.address,
-      INITIAL_BALANCE])
-    aBDKMath = await waffle.deployContract(first, ABDKMathQuad)
-    const RewardCalculator = await ethers.getContractFactory(
-      'RewardCalculator',
-      {
-        libraries: {
-          ABDKMathQuad: aBDKMath.address
-        }
-      }
-    )
-    const rewardCalculator = await RewardCalculator.deploy()
-    const tokenName = 'A token name'
-    const tokenSymbol = 'A token symbol'
-    const interestRate = await aBDKMath.div(
-      await aBDKMath.fromInt(25),
-      await aBDKMath.fromInt(10000)
-    )
-    const multiplier = await aBDKMath.fromInt(1E12)
-    const lockTime = TIMEOUT
-    yieldFarming = await waffle.deployContract(first, YieldFarming, [
-      timestampMock.address,
-      acceptedToken.address,
-      rewardCalculator.address,
-      tokenName,
-      tokenSymbol,
-      interestRate,
-      multiplier,
-      lockTime,
-      [first.address, second.address, third.address],
-      [100, 100, 100]
-    ])
-    const YieldFarmingToken = await ethers.getContractFactory('YieldFarmingToken')
-    yieldFarmingToken = await YieldFarmingToken.attach(await yieldFarming.yieldFarmingToken())
-  })
-  it('Ownership', async () => {
-    const firstOwner = await yieldFarming.owner()
-    expect(firstOwner).to.equal(first.address)
-    await expect(yieldFarming.transferOwnership(second.address))
-      .to.emit(yieldFarming, 'OwnershipTransferred')
-      .withArgs(first.address, second.address)
-    const secondOwner = await yieldFarming.owner()
-    expect(secondOwner).to.equal(second.address)
-  })
-  describe('Deposit', async () => {
-    let depositValue
-    beforeEach(async () => {
-      depositValue = INITIAL_BALANCE
-      await acceptedToken.increaseAllowance(yieldFarming.address, depositValue)
-    })
-    it('TokenTimeLock: release time is before current time', async () => {
-      await timestampMock.mock.getTimestamp.returns(DEPLOY_TIMESTAMP - 1)
-      try {
-        await expect(yieldFarming.deposit(depositValue))
-          .to.be.revertedWith('TokenTimeLock: release time is before current time')
-      } catch (error) {
-        // AssertionError: Expected transaction to be reverted with TokenTimeLock: release time is before current time,
-        // but other exception was thrown: Error: Transaction reverted and Hardhat couldn't infer the reason.
-        // Please report this to help us improve Hardhat.
-        console.log(error)
-      }
-    })
-    it('Emit AcceptedTokenDeposit', async () => {
-      await expect(yieldFarming.deposit(depositValue))
-        .to.emit(yieldFarming, 'AcceptedTokenDeposit')
-        .withArgs(first.address, depositValue)
-    })
-  })
-  describe('Release token', async () => {
-    describe('without deposit', async () => {
-      // beforeEach(async () => {
-      //   const depositValue = INITIAL_BALANCE
-      //   await yieldFarming.deposit(depositValue, { from: firstAccount })
-      // })
-      it('try release', async () => {
-        await expect(yieldFarming.releaseTokens())
-          .to.be.revertedWith('TokenTimeLock not found!')
-      })
-      it('try get TokenTimeLock', async () => {
-        await expect(yieldFarming.getMyTokenTimeLock())
-          .to.be.revertedWith('TokenTimeLock not found!')
-      })
-    })
-    describe('with deposit', async () => {
-      beforeEach(async () => {
-        const depositValue = INITIAL_BALANCE
-        await acceptedToken.increaseAllowance(yieldFarming.address, depositValue)
-        await timestampMock.mock.getTimestamp.returns(DEPOSIT_TIMESTAMP)
-        await yieldFarming.deposit(depositValue, { from: first.address })
-      })
-      // it.only('can withdraw payment', async () => {
-      //   expect(await yieldFarming.payments(firstAccount)).to.be.bignumber.equal(depositValue);
-
-      //   await yieldFarming.withdrawPayments(firstAccount);
-
-      //   expect(await balanceTracker.delta()).to.be.bignumber.equal(depositValue);
-      //   expect(await yieldFarming.payments(firstAccount)).to.be.bignumber.equal('0');
-      // });
-      it('before unlock', async () => {
-        await expect(yieldFarming.releaseTokens())
-          .to.be.revertedWith('TokenTimeLock: current time is before release time')
-      })
-      describe('after unlock', async () => {
-        beforeEach(async () => {
-          await timestampMock.mock.getTimestamp.returns(UNLOCK_TIMESTAMP)
-        })
-        it('Emit YieldFarmingTokenRelease', async () => {
-          const releaseValue = 997506234413965
-          await expect(yieldFarming.releaseTokens())
-            .to.emit(yieldFarming, 'YieldFarmingTokenRelease')
-            .withArgs(first.address, releaseValue)
-        })
-      })
-    })
-  })
-  describe('Burn token', async () => {
-    let burnValue
-    beforeEach(async () => {
-      const depositValue = INITIAL_BALANCE
-      await acceptedToken.increaseAllowance(yieldFarming.address, depositValue)
-      await yieldFarming.deposit(depositValue)
-      burnValue = 1
-      await timestampMock.mock.getTimestamp.returns(UNLOCK_TIMESTAMP)
-      await yieldFarming.releaseTokens()
-      await yieldFarmingToken.increaseAllowance(yieldFarming.address, burnValue)
-    })
-    it('Emit YieldFarmingTokenBurn', async () => {
-      await expect(yieldFarming.burn(burnValue))
-        .to.emit(yieldFarming, 'YieldFarmingTokenBurn')
-        .withArgs(first.address, burnValue)
-    })
-  })
-})
-
-describe('YieldFarming B', async () => {
-  let first, second, third, acceptedToken, timestampMock, yieldFarming, aBDKMath
   const TIMEOUT = 1
-  // const [firstAccount, secondAccount] = accounts
-  const INITIAL_BALANCE = 1000
-  const DEPLOY_TIMESTAMP = 1
-  const DEPOSIT_TIMESTAMP = DEPLOY_TIMESTAMP + 24 * 60 * 60 // one day later
-  beforeEach(async () => {
-    // eslint-disable-next-line no-unused-vars
-    [first, second, third] = waffle.provider.getWallets()
-    timestampMock = await waffle.deployMockContract(first, Timestamp.abi)
-    await timestampMock.mock.getTimestamp.returns(DEPLOY_TIMESTAMP)
-    expect(await timestampMock.getTimestamp()).to.be.bignumber.equal(DEPLOY_TIMESTAMP)
-    acceptedToken = await waffle.deployContract(first, ERC20Mock, [
-      'ERC20Mock name',
-      'ERC20Mock symbol',
-      first.address,
-      INITIAL_BALANCE])
-    aBDKMath = await waffle.deployContract(first, ABDKMathQuad)
-    const RewardCalculator = await ethers.getContractFactory(
-      'RewardCalculator',
-      {
-        libraries: {
-          ABDKMathQuad: aBDKMath.address
-        }
+  // eslint-disable-next-line no-unused-vars
+  const [first, second, third] = waffle.provider.getWallets()
+  const timestampMock = await waffle.deployMockContract(first, Timestamp.abi)
+  await timestampMock.mock.getTimestamp.returns(DEPLOY_TIMESTAMP)
+  expect(await timestampMock.getTimestamp()).to.be.bignumber.equal(DEPLOY_TIMESTAMP)
+  const acceptedToken = await waffle.deployContract(first, ERC20Mock, [
+    'ERC20Mock name',
+    'ERC20Mock symbol',
+    first.address,
+    INITIAL_BALANCE])
+  const aBDKMath = await waffle.deployContract(first, ABDKMathQuad)
+  const RewardCalculator = await ethers.getContractFactory(
+    'RewardCalculator',
+    {
+      libraries: {
+        ABDKMathQuad: aBDKMath.address
       }
-    )
-    const rewardCalculator = await RewardCalculator.deploy()
-    const tokenName = 'A token name'
-    const tokenSymbol = 'A token symbol'
-    const interestRate = await aBDKMath.div(
-      await aBDKMath.fromInt(25),
-      await aBDKMath.fromInt(10000)
-    )
-    const multiplier = await aBDKMath.fromInt(0)
-    const lockTime = TIMEOUT
-    yieldFarming = await waffle.deployContract(first, YieldFarming, [
-      timestampMock.address,
-      acceptedToken.address,
-      rewardCalculator.address,
-      tokenName,
-      tokenSymbol,
-      interestRate,
-      multiplier,
-      lockTime,
-      [first.address, second.address, third.address],
-      [100, 100, 100]
-    ])
-  })
-  describe('Release token', async () => {
-    describe('with deposit', async () => {
+    }
+  )
+  const rewardCalculator = await RewardCalculator.deploy()
+  const tokenName = 'A token name'
+  const tokenSymbol = 'A token symbol'
+  const interestRate = await aBDKMath.div(
+    await aBDKMath.fromInt(25),
+    await aBDKMath.fromInt(10000)
+  )
+  const multiplier = await aBDKMath.fromInt(_multiplier)
+  const lockTime = TIMEOUT
+  const yieldFarming = await waffle.deployContract(first, YieldFarming, [
+    timestampMock.address,
+    acceptedToken.address,
+    rewardCalculator.address,
+    tokenName,
+    tokenSymbol,
+    interestRate,
+    multiplier,
+    lockTime,
+    [first.address, second.address, third.address],
+    [100, 100, 100]
+  ])
+  const YieldFarmingToken = await ethers.getContractFactory('YieldFarmingToken')
+  const yieldFarmingToken = await YieldFarmingToken.attach(await yieldFarming.yieldFarmingToken())
+  return { acceptedToken, first, second, third, yieldFarming, yieldFarmingToken, timestampMock, INITIAL_BALANCE, DEPLOY_TIMESTAMP, DEPOSIT_TIMESTAMP, UNLOCK_TIMESTAMP }
+}
+
+describe('YieldFarming contract', () => {
+  describe('With multiplier 1E12', async () => {
+    let deploy
+    beforeEach(async () => {
+      deploy = await mainDeploy(1E12)
+    })
+    it('Ownership', async () => {
+      const firstOwner = await deploy.yieldFarming.owner()
+      expect(firstOwner).to.equal(deploy.first.address)
+      await expect(deploy.yieldFarming.transferOwnership(deploy.second.address))
+        .to.emit(deploy.yieldFarming, 'OwnershipTransferred')
+        .withArgs(deploy.first.address, deploy.second.address)
+      const secondOwner = await deploy.yieldFarming.owner()
+      expect(secondOwner).to.equal(deploy.second.address)
+    })
+    describe('Deposit', async () => {
+      let depositValue
       beforeEach(async () => {
-        const depositValue = INITIAL_BALANCE
-        await acceptedToken.increaseAllowance(yieldFarming.address, depositValue)
-        await yieldFarming.deposit(depositValue, { from: first.address })
+        depositValue = deploy.INITIAL_BALANCE
+        await deploy.acceptedToken.increaseAllowance(deploy.yieldFarming.address, depositValue)
       })
-      describe('after unlock', async () => {
-        beforeEach(async () => {
-          await timestampMock.mock.getTimestamp.returns(DEPOSIT_TIMESTAMP)
+      it('TokenTimeLock: release time is before current time', async () => {
+        await deploy.timestampMock.mock.getTimestamp.returns(deploy.DEPLOY_TIMESTAMP - 1)
+        try {
+          await expect(deploy.yieldFarming.deposit(depositValue))
+            .to.be.revertedWith('TokenTimeLock: release time is before current time')
+        } catch (error) {
+          // AssertionError: Expected transaction to be reverted with TokenTimeLock: release time is before current time,
+          // but other exception was thrown: Error: Transaction reverted and Hardhat couldn't infer the reason.
+          // Please report this to help us improve Hardhat.
+          console.log(error)
+        }
+      })
+      it('Emit AcceptedTokenDeposit', async () => {
+        await expect(deploy.yieldFarming.deposit(depositValue))
+          .to.emit(deploy.yieldFarming, 'AcceptedTokenDeposit')
+          .withArgs(deploy.first.address, depositValue)
+      })
+    })
+    describe('Release token', async () => {
+      describe('without deposit', async () => {
+        it('try release', async () => {
+          await expect(deploy.yieldFarming.releaseTokens())
+            .to.be.revertedWith('TokenTimeLock not found!')
         })
-        it('Revert with no tokens to release', async () => {
-          await expect(yieldFarming.releaseTokens())
-            .to.be.revertedWith('TokenTimeLock: no tokens to release')
+        it('try get TokenTimeLock', async () => {
+          await expect(deploy.yieldFarming.getMyTokenTimeLock())
+            .to.be.revertedWith('TokenTimeLock not found!')
+        })
+      })
+      describe('with deposit', async () => {
+        beforeEach(async () => {
+          const depositValue = deploy.INITIAL_BALANCE
+          await deploy.acceptedToken.increaseAllowance(deploy.yieldFarming.address, depositValue)
+          await deploy.timestampMock.mock.getTimestamp.returns(deploy.DEPOSIT_TIMESTAMP)
+          await deploy.yieldFarming.deposit(depositValue, { from: deploy.first.address })
+        })
+        it('before unlock', async () => {
+          await expect(deploy.yieldFarming.releaseTokens())
+            .to.be.revertedWith('TokenTimeLock: current time is before release time')
+        })
+        describe('after unlock', async () => {
+          beforeEach(async () => {
+            await deploy.timestampMock.mock.getTimestamp.returns(deploy.UNLOCK_TIMESTAMP)
+          })
+          it('Emit YieldFarmingTokenRelease', async () => {
+            const releaseValue = 997506234413965
+            await expect(deploy.yieldFarming.releaseTokens())
+              .to.emit(deploy.yieldFarming, 'YieldFarmingTokenRelease')
+              .withArgs(deploy.first.address, releaseValue)
+          })
+          describe('Burn token', async () => {
+            let burnValue
+            beforeEach(async () => {
+              await deploy.yieldFarming.releaseTokens()
+              burnValue = 1
+              await deploy.yieldFarmingToken.increaseAllowance(deploy.yieldFarming.address, burnValue)
+            })
+            it('Emit YieldFarmingTokenBurn', async () => {
+              await expect(deploy.yieldFarming.burn(burnValue))
+                .to.emit(deploy.yieldFarming, 'YieldFarmingTokenBurn')
+                .withArgs(deploy.first.address, burnValue)
+            })
+          })
         })
       })
     })
   })
-})
-
-describe('YieldFarming C', () => {
-  let first, timestamp
-  beforeEach(async () => {
-    // eslint-disable-next-line no-unused-vars
-    [first] = waffle.provider.getWallets()
-    timestamp = await waffle.deployContract(first, Timestamp)
-  })
-  it('Timestamp', async () => {
-    const unixTime = Math.floor(Date.now() / 1000)
-    expect(await timestamp.getTimestamp())
-      .to.be.bignumber.to.be.within(unixTime - 1000, unixTime + 1000)
+  describe('With multiplier 0', async () => {
+    let deploy
+    beforeEach(async () => {
+      deploy = await mainDeploy(0)
+    })
+    describe('Release token', async () => {
+      describe('with deposit', async () => {
+        beforeEach(async () => {
+          const depositValue = deploy.INITIAL_BALANCE
+          await deploy.acceptedToken.increaseAllowance(deploy.yieldFarming.address, depositValue)
+          await deploy.yieldFarming.deposit(depositValue, { from: deploy.first.address })
+        })
+        describe('after unlock', async () => {
+          beforeEach(async () => {
+            await deploy.timestampMock.mock.getTimestamp.returns(deploy.DEPOSIT_TIMESTAMP)
+          })
+          it('Revert with no tokens to release', async () => {
+            await expect(deploy.yieldFarming.releaseTokens())
+              .to.be.revertedWith('TokenTimeLock: no tokens to release')
+          })
+        })
+      })
+    })
   })
 })

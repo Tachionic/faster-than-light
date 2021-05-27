@@ -38,8 +38,8 @@ contract YieldFarming is PaymentSplitter {
         bytes16 _multiplier,
         uint _lockTime,
         address[] memory _payees,
-        uint256[] memory _shares) PaymentSplitter(_acceptedToken, _payees, _shares)
-        {
+        uint256[] memory _shares
+    ) PaymentSplitter(_acceptedToken, _payees, _shares) {
         timestamp = _timestamp;
         updateTokenomics(_interestRate, _multiplier, _lockTime);
         yieldFarmingToken = new YieldFarmingToken(_tokenName, _tokenSymbol);
