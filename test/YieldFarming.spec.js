@@ -11,7 +11,7 @@ import Timestamp from '../artifacts/contracts/Timestamp.sol/Timestamp.json'
 use(waffleChai)
 
 describe('YieldFarming', () => {
-  let first, second, acceptedToken, timestampMock, yieldFarming, yieldFarmingToken, aBDKMath
+  let first, second, third, acceptedToken, timestampMock, yieldFarming, yieldFarmingToken, aBDKMath
   const TIMEOUT = 1
   // const [firstAccount, secondAccount] = accounts
   const INITIAL_BALANCE = 1000
@@ -20,7 +20,7 @@ describe('YieldFarming', () => {
   const UNLOCK_TIMESTAMP = DEPOSIT_TIMESTAMP + 24 * 60 * 60 // one day later
   beforeEach(async () => {
     // eslint-disable-next-line no-unused-vars
-    [first, second] = waffle.provider.getWallets()
+    [first, second, third] = waffle.provider.getWallets()
     timestampMock = await waffle.deployMockContract(first, Timestamp.abi)
     await timestampMock.mock.getTimestamp.returns(DEPLOY_TIMESTAMP)
     expect(await timestampMock.getTimestamp()).to.be.bignumber.equal(DEPLOY_TIMESTAMP)
@@ -55,7 +55,9 @@ describe('YieldFarming', () => {
       tokenSymbol,
       interestRate,
       multiplier,
-      lockTime
+      lockTime,
+      [first.address, second.address, third.address],
+      [100, 100, 100]
     ])
     const YieldFarmingToken = await ethers.getContractFactory('YieldFarmingToken')
     yieldFarmingToken = await YieldFarmingToken.attach(await yieldFarming.yieldFarmingToken())
@@ -160,7 +162,7 @@ describe('YieldFarming', () => {
 })
 
 describe('YieldFarming B', async () => {
-  let first, acceptedToken, timestampMock, yieldFarming, aBDKMath
+  let first, second, third, acceptedToken, timestampMock, yieldFarming, aBDKMath
   const TIMEOUT = 1
   // const [firstAccount, secondAccount] = accounts
   const INITIAL_BALANCE = 1000
@@ -168,7 +170,7 @@ describe('YieldFarming B', async () => {
   const DEPOSIT_TIMESTAMP = DEPLOY_TIMESTAMP + 24 * 60 * 60 // one day later
   beforeEach(async () => {
     // eslint-disable-next-line no-unused-vars
-    [first] = waffle.provider.getWallets()
+    [first, second, third] = waffle.provider.getWallets()
     timestampMock = await waffle.deployMockContract(first, Timestamp.abi)
     await timestampMock.mock.getTimestamp.returns(DEPLOY_TIMESTAMP)
     expect(await timestampMock.getTimestamp()).to.be.bignumber.equal(DEPLOY_TIMESTAMP)
@@ -203,7 +205,9 @@ describe('YieldFarming B', async () => {
       tokenSymbol,
       interestRate,
       multiplier,
-      lockTime
+      lockTime,
+      [first.address, second.address, third.address],
+      [100, 100, 100]
     ])
   })
   describe('Release token', async () => {

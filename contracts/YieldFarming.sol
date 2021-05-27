@@ -7,13 +7,13 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./YieldFarmingToken.sol";
 import "./RewardCalculator.sol";
+import "./PaymentSplitter.sol";
 import "./Timestamp.sol";
 
-contract YieldFarming is Ownable {
+contract YieldFarming is PaymentSplitter {
     using SafeERC20 for YieldFarmingToken;
     using SafeERC20 for IERC20;
 
-    event AcceptedTokenDeposit(address depositor, uint amount);
     event YieldFarmingTokenBurn(address burner, uint amount);
     event YieldFarmingTokenRelease(address releaser, uint amount);
 
@@ -28,7 +28,18 @@ contract YieldFarming is Ownable {
 
     mapping(address => TokenTimeLock) private tokenTimeLocks;
 
-    constructor(Timestamp _timestamp, IERC20 _acceptedToken, RewardCalculator _rewardCalculator, string memory _tokenName, string memory _tokenSymbol, bytes16 _interestRate, bytes16 _multiplier, uint _lockTime){
+    constructor(
+        Timestamp _timestamp,
+        IERC20 _acceptedToken,
+        RewardCalculator _rewardCalculator,
+        string memory _tokenName,
+        string memory _tokenSymbol,
+        bytes16 _interestRate,
+        bytes16 _multiplier,
+        uint _lockTime,
+        address[] memory _payees,
+        uint256[] memory _shares) PaymentSplitter(_acceptedToken, _payees, _shares)
+        {
         timestamp = _timestamp;
         updateTokenomics(_interestRate, _multiplier, _lockTime);
         yieldFarmingToken = new YieldFarmingToken(_tokenName, _tokenSymbol);
@@ -45,8 +56,7 @@ contract YieldFarming is Ownable {
 
     function deposit(uint amount) public {
         address depositor = _msgSender();
-        acceptedToken.safeTransferFrom(depositor, address(this), amount);
-        emit AcceptedTokenDeposit(depositor, amount);
+        super.deposit(depositor, amount);
         uint timeStamp = timestamp.getTimestamp();
         TokenTimeLock tokenTimeLock = new TokenTimeLock(timestamp, yieldFarmingToken, depositor, timeStamp + lockTime);
         tokenTimeLocks[depositor] = tokenTimeLock;
