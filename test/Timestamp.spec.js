@@ -7,16 +7,16 @@ import { BN } from '@openzeppelin/test-helpers'
 use(waffleChai)
 
 describe('Timestamp contract', () => {
-    let deploy = {}
-    beforeEach(async () => {
-        // // eslint-disable-next-line no-unused-vars
-        const [first] = waffle.provider.getWallets()
-        deploy.timestamp = await waffle.deployContract(first, Timestamp)
-        deploy.first = first
-    })
-    it('Gets correctly the timestamp', async () => {
-        const unixTime = Math.floor(Date.now() / 1000)
-        expect(await deploy.timestamp.getTimestamp())
-            .to.be.bignumber.to.be.within(unixTime - 1000, unixTime + 1000)
-    })
+  const deploy = {}
+  beforeEach(async () => {
+    // // eslint-disable-next-line no-unused-vars
+    const [first] = waffle.provider.getWallets()
+    deploy.timestamp = await waffle.deployContract(first, Timestamp)
+    deploy.first = first
+  })
+  it('Gets correctly the timestamp', async () => {
+    const unixTime = Math.floor(Date.now() / 1000)
+    expect(await deploy.timestamp.getTimestamp())
+      .to.be.bignumber.to.be.within(unixTime - 1000, unixTime + 1000)
+  })
 })
