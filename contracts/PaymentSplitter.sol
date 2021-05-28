@@ -29,7 +29,6 @@ struct Record {
 struct RecordArchive {
     mapping(address => Record) records;
     address[] addresses;
-    Record total;
 }
 contract PaymentSplitter is Context, Ownable {
     using SafeERC20 for IERC20;
@@ -78,14 +77,14 @@ contract PaymentSplitter is Context, Ownable {
      * @dev Getter for the total shares held by payees.
      */
     function totalShares() public view returns (uint256) {
-        return payeeArchive.total.shares;
+        return shares(address(this));
     }
 
     /**
      * @dev Getter for the total amount of Tokens already released.
      */
     function totalReleased() public view returns (uint256) {
-        return payeeArchive.total.released;
+        return released(address(this));
     }
 
     /**
@@ -124,15 +123,14 @@ contract PaymentSplitter is Context, Ownable {
         // solhint-disable-next-line reason-string
         require(isPayee(account), "PaymentSplitter: account is not a payee");
 
-        uint256 theTotalReleased = totalReleased();
-        uint256 totalReceived = acceptedToken.balanceOf(address(this))  + theTotalReleased;
+        uint256 totalReceived = acceptedToken.balanceOf(address(this))  + totalReleased();
         uint256 payment = totalReceived * shares(account) / totalShares() - released(account);
 
         // solhint-disable-next-line reason-string
         require(payment != 0, "PaymentSplitter: account is not due payment");
 
-        payeeArchive.records[account].released = released(account) + payment;
-        payeeArchive.total.released = theTotalReleased + payment;
+        record(account).released += payment;
+        payeeArchive.records[address(this)].released += payment;
 
         acceptedToken.safeTransfer(account, payment);
         emit PaymentReleased(account, payment);
@@ -156,8 +154,8 @@ contract PaymentSplitter is Context, Ownable {
         // solhint-disable-next-line reason-string
         require(shares(account) != _shares, "PaymentSplitter: account already has that many shares");
         uint delta = _shares - shares(account);
-        payeeArchive.records[account].shares = _shares;
-        payeeArchive.total.shares = payeeArchive.total.shares + delta;
+        record(account).shares = _shares;
+        payeeArchive.records[address(this)].shares += delta;
         emit PayeeUpdated(account, delta);
     }
 
@@ -175,7 +173,7 @@ contract PaymentSplitter is Context, Ownable {
 
         payeeArchive.addresses.push(account);
         payeeArchive.records[account].shares = _shares;
-        payeeArchive.total.shares = payeeArchive.total.shares + _shares;
+        payeeArchive.records[address(this)].shares += _shares;
         emit PayeeAdded(account, _shares);
     }
 
@@ -200,7 +198,7 @@ contract PaymentSplitter is Context, Ownable {
         delete payeeArchive.addresses[lastRecordIndex];
         // decrement the array length
         payeeArchive.addresses = this.discardLastElement(payeeArchive.addresses, lastRecordIndex);
-        payeeArchive.total.shares = payeeArchive.total.shares - recordToBeRemoved.shares;
+        payeeArchive.records[address(this)].shares -= recordToBeRemoved.shares;
         emit PayeeRemoved(account);
     }
 

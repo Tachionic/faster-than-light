@@ -92,21 +92,37 @@ describe('YieldFarming contract', () => {
                   .withArgs(deploy.first.address, burnValue)
               })
             })
-            describe('Pull payment', async () => {
-              let expectedPayment
+            describe('Payment splitter', async () => {
+              let expectedPayment, expectedTotalShares
               beforeEach(async () => {
+                expectedTotalShares = deploy.payees.reduce(
+                  (totalValue, payee) => { return totalValue + payee.shares },
+                  0
+                )
                 expectedPayment = Math.trunc(
                   deploy.constants.INITIAL_BALANCE * deploy.payees[0].shares /
-                  deploy.payees.reduce(
-                    (totalValue, payee) => { return totalValue + payee.shares },
-                    0
-                  )
+                  expectedTotalShares
                 )
               })
-              it('Emit PaymentReleased', async () => {
-                await expect(deploy.yieldFarming.release(deploy.first.address))
-                  .to.emit(deploy.yieldFarming, 'PaymentReleased')
-                  .withArgs(deploy.first.address, expectedPayment)
+              describe('Release payment', async () => {
+                it('Emit PaymentReleased', async () => {
+                  await expect(deploy.yieldFarming.release(deploy.first.address))
+                    .to.emit(deploy.yieldFarming, 'PaymentReleased')
+                    .withArgs(deploy.first.address, expectedPayment)
+                })
+                describe('After payment release', async () => {
+                  beforeEach(async () => {
+                    await deploy.yieldFarming.release(deploy.first.address)
+                  })
+                  it('Correctly calculates total released', async () => {
+                    expect(await deploy.yieldFarming.totalReleased())
+                      .to.be.equal(expectedPayment)
+                  })
+                })
+              })
+              it('Correctly calculates total shares', async () => {
+                expect(await deploy.yieldFarming.totalShares())
+                  .to.be.equal(expectedTotalShares)
               })
             })
           })
