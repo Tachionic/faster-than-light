@@ -196,7 +196,7 @@ contract PaymentSplitter is Context, Ownable {
         payeeArchive.records[account] = record(lastRecordPayee);
         payeeArchive.addresses[index] = lastRecordPayee;
         // call delete on the last index
-        delete payeeArchive.records[payeeArchive.addresses[lastRecordIndex]];
+        delete payeeArchive.records[payee(lastRecordIndex)];
         delete payeeArchive.addresses[lastRecordIndex];
         // decrement the array length
         payeeArchive.addresses = this.discardLastElement(payeeArchive.addresses, lastRecordIndex);
