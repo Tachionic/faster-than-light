@@ -24,7 +24,7 @@ const deployMe = async (_multiplier) => {
     new Record(fourth.address, 50) // wroking capital
   ]
   const timestamp = await waffle.deployContract(first, Timestamp)
-  return await rawDeploy(timestamp, safeERC20, payees, [first, second, third], constants)
+  return await rawDeploy(timestamp, safeERC20, payees, [first, second, third, fourth], constants)
 }
 
 const main = async () => {

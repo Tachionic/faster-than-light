@@ -7,16 +7,10 @@ import ABDKMathQuad from '../artifacts/contracts/abdk-libraries-solidity/ABDKMat
 import YieldFarming from '../artifacts/contracts/YieldFarming.sol/YieldFarming.json'
 import ERC20Mock from '../artifacts/contracts/ERC20Mock.sol/ERC20Mock.json'
 import Timestamp from '../artifacts/contracts/Timestamp.sol/Timestamp.json'
+import { Record } from '../test/helpers/Record'
 use(waffleChai)
 
 const MULTIPLIER = 1E12
-
-class Record {
-  constructor (address, shares) {
-    this.address = address
-    this.shares = shares
-  }
-}
 
 const mockedDeploy = async (_multiplier) => {
   const LOCK_TIME = 1
@@ -33,7 +27,7 @@ const mockedDeploy = async (_multiplier) => {
   const TOKEN_SYMBOL = 'A Token symbol'
   const TOKEN = { NAME: TOKEN_NAME, SYMBOL: TOKEN_SYMBOL }
   const constants = { MULTIPLIER, LOCK_TIME, INITIAL_BALANCE, INTEREST, TIMESTAMPS, TOKEN }
-  const [first, second, third] = waffle.provider.getWallets()
+  const [first, second, third, fourth] = waffle.provider.getWallets()
   const payees = [
     new Record(first.address, 100),
     new Record(second.address, 100),
@@ -47,11 +41,11 @@ const mockedDeploy = async (_multiplier) => {
     'ERC20Mock symbol',
     first.address,
     constants.INITIAL_BALANCE])
-  return await rawDeploy(timestamp, acceptedToken, payees, [first, second, third], constants)
+  return await rawDeploy(timestamp, acceptedToken, payees, [first, second, third, fourth], constants)
 }
 
 const rawDeploy = async (timestamp, acceptedToken, payees, accounts, constants) => {
-  const [first, second, third] = accounts
+  const [first, second, third, fourth] = accounts
   const aBDKMath = await waffle.deployContract(first, ABDKMathQuad)
   const RewardCalculator = await ethers.getContractFactory(
     'RewardCalculator',
@@ -81,7 +75,7 @@ const rawDeploy = async (timestamp, acceptedToken, payees, accounts, constants) 
   ])
   const YieldFarmingToken = await ethers.getContractFactory('YieldFarmingToken')
   const yieldFarmingToken = await YieldFarmingToken.attach(await yieldFarming.yieldFarmingToken())
-  return { acceptedToken, rewardCalculator, first, second, third, yieldFarming, yieldFarmingToken, timestamp, payees, constants }
+  return { acceptedToken, rewardCalculator, first, second, third, fourth, yieldFarming, yieldFarmingToken, timestamp, payees, constants }
 }
 
 export { mockedDeploy, rawDeploy, Timestamp, waffle, expect, ethers, MULTIPLIER, Record }
