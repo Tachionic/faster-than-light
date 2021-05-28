@@ -37,8 +37,8 @@ module.exports = {
     },
   },
   gasReporter: {
-    // enable: enableGasReport,
+    enable: enableGasReport,
     currency: 'USD',
-    // outputFile: process.env.CI ? 'gas-report.txt' : undefined,
+    outputFile: process.env.CI ? 'gas-report.txt' : undefined,
   },
 };

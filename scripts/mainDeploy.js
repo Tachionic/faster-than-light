@@ -24,10 +24,15 @@ const mockedDeploy = async (_multiplier) => {
   const DEPLOY_TIMESTAMP = 1
   const DEPOSIT_TIMESTAMP = DEPLOY_TIMESTAMP + 24 * 60 * 60 // one day later
   const UNLOCK_TIMESTAMP = DEPOSIT_TIMESTAMP + 24 * 60 * 60 // one day later
+  const TIMESTAMPS = {DEPLOY: DEPLOY_TIMESTAMP, DEPOSIT: DEPOSIT_TIMESTAMP, UNLOCK: UNLOCK_TIMESTAMP}
+  const MULTIPLIER = _multiplier
   const INTEREST_NUMERATOR = 25
   const INTEREST_DENOMINATOR = 10000
-  const MULTIPLIER = _multiplier
-  const mockConstants = { MULTIPLIER, LOCK_TIME, INITIAL_BALANCE, INTEREST_NUMERATOR, INTEREST_DENOMINATOR, DEPLOY_TIMESTAMP, DEPOSIT_TIMESTAMP, UNLOCK_TIMESTAMP }
+  const INTEREST = {NUMERATOR: INTEREST_NUMERATOR, DENOMINATOR: INTEREST_DENOMINATOR}
+  const TOKEN_NAME = 'A Token name'
+  const TOKEN_SYMBOL = 'A Token symbol'
+  const TOKEN = {NAME: TOKEN_NAME, SYMBOL: TOKEN_SYMBOL}
+  const constants = { MULTIPLIER, LOCK_TIME, INITIAL_BALANCE, INTEREST, TIMESTAMPS, TOKEN}
   const [first, second, third] = waffle.provider.getWallets()
   const payees = [
     new Record(first.address, 100),
@@ -35,14 +40,14 @@ const mockedDeploy = async (_multiplier) => {
     new Record(third.address, 100)
   ]
   const timestamp = await waffle.deployMockContract(first, Timestamp.abi)
-  await timestamp.mock.getTimestamp.returns(mockConstants.DEPLOY_TIMESTAMP)
-  expect(await timestamp.getTimestamp()).to.be.bignumber.equal(mockConstants.DEPLOY_TIMESTAMP)
+  await timestamp.mock.getTimestamp.returns(constants.TIMESTAMPS.DEPLOY)
+  expect(await timestamp.getTimestamp()).to.be.bignumber.equal(constants.TIMESTAMPS.DEPLOY)
   const acceptedToken = await waffle.deployContract(first, ERC20Mock, [
     'ERC20Mock name',
     'ERC20Mock symbol',
     first.address,
-    INITIAL_BALANCE])
-  return await rawDeploy(timestamp, acceptedToken, payees, [first, second, third], mockConstants)
+    constants.INITIAL_BALANCE])
+  return await rawDeploy(timestamp, acceptedToken, payees, [first, second, third], constants)
 }
 
 const rawDeploy = async (timestamp, acceptedToken, payees, accounts, constants) => {
@@ -57,19 +62,17 @@ const rawDeploy = async (timestamp, acceptedToken, payees, accounts, constants) 
     }
   )
   const rewardCalculator = await RewardCalculator.deploy()
-  const tokenName = 'A token name'
-  const tokenSymbol = 'A token symbol'
   const interestRate = await aBDKMath.div(
-    await aBDKMath.fromInt(constants.INTEREST_NUMERATOR),
-    await aBDKMath.fromInt(constants.INTEREST_DENOMINATOR)
+    await aBDKMath.fromInt(constants.INTEREST.NUMERATOR),
+    await aBDKMath.fromInt(constants.INTEREST.DENOMINATOR)
   )
   const multiplier = await aBDKMath.fromInt(constants.MULTIPLIER)
   const yieldFarming = await waffle.deployContract(first, YieldFarming, [
     timestamp.address,
     acceptedToken.address,
     rewardCalculator.address,
-    tokenName,
-    tokenSymbol,
+    constants.TOKEN.NAME,
+    constants.TOKEN.SYMBOL,
     interestRate,
     multiplier,
     constants.LOCK_TIME,

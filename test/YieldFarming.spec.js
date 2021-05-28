@@ -27,7 +27,7 @@ describe('YieldFarming contract', () => {
         await deploy.acceptedToken.increaseAllowance(deploy.yieldFarming.address, depositValue)
       })
       it('TokenTimeLock: release time is before current time', async () => {
-        await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.DEPLOY_TIMESTAMP - 1)
+        await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.DEPLOY - 1)
         try {
           await expect(deploy.yieldFarming.deposit(depositValue))
             .to.be.revertedWith('TokenTimeLock: release time is before current time')
@@ -59,7 +59,7 @@ describe('YieldFarming contract', () => {
         beforeEach(async () => {
           const depositValue = deploy.constants.INITIAL_BALANCE
           await deploy.acceptedToken.increaseAllowance(deploy.yieldFarming.address, depositValue)
-          await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.DEPOSIT_TIMESTAMP)
+          await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.DEPOSIT)
           await deploy.yieldFarming.deposit(depositValue, { from: deploy.first.address })
         })
         it('before unlock', async () => {
@@ -68,7 +68,7 @@ describe('YieldFarming contract', () => {
         })
         describe('after unlock', async () => {
           beforeEach(async () => {
-            await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.UNLOCK_TIMESTAMP)
+            await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.UNLOCK)
           })
           it('Emit YieldFarmingTokenRelease', async () => {
             const releaseValue = 997506234413965
@@ -128,7 +128,7 @@ describe('YieldFarming contract', () => {
         })
         describe('after unlock', async () => {
           beforeEach(async () => {
-            await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.DEPOSIT_TIMESTAMP)
+            await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.DEPOSIT)
           })
           it('Revert with no tokens to release', async () => {
             await expect(deploy.yieldFarming.releaseTokens())
