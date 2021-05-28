@@ -88,6 +88,22 @@ describe('YieldFarming contract', () => {
       ]))
         .to.be.revertedWith('PaymentSplitter: account is the zero address')
     })
+    it('Account is already payee', async () => {
+      payees[1].address = payees[0].address
+      await expect(waffle.deployContract(first, YieldFarming, [
+        timestamp.address,
+        acceptedToken.address,
+        rewardCalculator.address,
+        constants.TOKEN.NAME,
+        constants.TOKEN.SYMBOL,
+        interestRate,
+        multiplier,
+        constants.LOCK_TIME,
+        payees.map((payee) => { return payee.address }),
+        payees.map((payee) => { return payee.shares })
+      ]))
+        .to.be.revertedWith('PaymentSplitter: account is already payee')
+    })
     it('Different payee address\' length to payee shares\' length', async () => {
       const payeeAddresses = payees.map((payee) => { return payee.address })
       payeeAddresses.pop() // remove last element
