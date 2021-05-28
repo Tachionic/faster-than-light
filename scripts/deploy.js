@@ -1,4 +1,4 @@
-import { rawDeploy, Timestamp, waffle, expect, ethers, MULTIPLIER } from './mainDeploy'
+import { rawDeploy, Timestamp, waffle, expect, ethers, MULTIPLIER, Record } from './mainDeploy'
 import { parse, stringify } from 'flatted'
 const fs = require('fs')
 
@@ -11,8 +11,13 @@ const deployMe = async (_multiplier) => {
   const MULTIPLIER = _multiplier
   const constants = { MULTIPLIER, ACCEPTED_TOKEN_ADDRESS, LOCK_TIME, INTEREST_NUMERATOR, INTEREST_DENOMINATOR }
   const [first, second, third] = waffle.provider.getWallets()
+  const payees = [
+    new Record(first.address, 100),
+    new Record(second.address, 100),
+    new Record(third.address, 100)
+  ]
   const timestamp = await waffle.deployContract(first, Timestamp)
-  return await rawDeploy(timestamp, safeERC20, LOCK_TIME, [first, second, third], constants)
+  return await rawDeploy(timestamp, safeERC20, payees, [first, second, third], constants)
 }
 
 const main = async () => {

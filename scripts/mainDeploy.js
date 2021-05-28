@@ -11,7 +11,15 @@ use(waffleChai)
 
 const MULTIPLIER = 1E12
 
+class Record {
+  constructor (address, shares) {
+    this.address = address
+    this.shares = shares
+  }
+}
+
 const mockedDeploy = async (_multiplier) => {
+  const LOCK_TIME = 1
   const INITIAL_BALANCE = 1000
   const DEPLOY_TIMESTAMP = 1
   const DEPOSIT_TIMESTAMP = DEPLOY_TIMESTAMP + 24 * 60 * 60 // one day later
@@ -19,8 +27,13 @@ const mockedDeploy = async (_multiplier) => {
   const INTEREST_NUMERATOR = 25
   const INTEREST_DENOMINATOR = 10000
   const MULTIPLIER = _multiplier
-  const mockConstants = { MULTIPLIER, INITIAL_BALANCE, INTEREST_NUMERATOR, INTEREST_DENOMINATOR, DEPLOY_TIMESTAMP, DEPOSIT_TIMESTAMP, UNLOCK_TIMESTAMP }
+  const mockConstants = { MULTIPLIER, LOCK_TIME, INITIAL_BALANCE, INTEREST_NUMERATOR, INTEREST_DENOMINATOR, DEPLOY_TIMESTAMP, DEPOSIT_TIMESTAMP, UNLOCK_TIMESTAMP }
   const [first, second, third] = waffle.provider.getWallets()
+  const payees = [
+    new Record(first.address, 100),
+    new Record(second.address, 100),
+    new Record(third.address, 100)
+  ]
   const timestamp = await waffle.deployMockContract(first, Timestamp.abi)
   await timestamp.mock.getTimestamp.returns(mockConstants.DEPLOY_TIMESTAMP)
   expect(await timestamp.getTimestamp()).to.be.bignumber.equal(mockConstants.DEPLOY_TIMESTAMP)
@@ -29,10 +42,10 @@ const mockedDeploy = async (_multiplier) => {
     'ERC20Mock symbol',
     first.address,
     INITIAL_BALANCE])
-  return await rawDeploy(timestamp, acceptedToken, 1, [first, second, third], mockConstants)
+  return await rawDeploy(timestamp, acceptedToken, payees, [first, second, third], mockConstants)
 }
 
-const rawDeploy = async (timestamp, acceptedToken, lockTime, accounts, constants) => {
+const rawDeploy = async (timestamp, acceptedToken, payees, accounts, constants) => {
   const [first, second, third] = accounts
   const aBDKMath = await waffle.deployContract(first, ABDKMathQuad)
   const RewardCalculator = await ethers.getContractFactory(
@@ -51,13 +64,6 @@ const rawDeploy = async (timestamp, acceptedToken, lockTime, accounts, constants
     await aBDKMath.fromInt(constants.INTEREST_DENOMINATOR)
   )
   const multiplier = await aBDKMath.fromInt(constants.MULTIPLIER)
-  class Record {
-    constructor (address, shares) {
-      this.address = address
-      this.shares = shares
-    }
-  }
-  const payees = [new Record(first.address, 100), new Record(second.address, 100), new Record(third.address, 100)]
   const yieldFarming = await waffle.deployContract(first, YieldFarming, [
     timestamp.address,
     acceptedToken.address,
@@ -66,7 +72,7 @@ const rawDeploy = async (timestamp, acceptedToken, lockTime, accounts, constants
     tokenSymbol,
     interestRate,
     multiplier,
-    lockTime,
+    constants.LOCK_TIME,
     payees.map((payee) => { return payee.address }),
     payees.map((payee) => { return payee.shares })
   ])
@@ -75,4 +81,4 @@ const rawDeploy = async (timestamp, acceptedToken, lockTime, accounts, constants
   return { acceptedToken, rewardCalculator, first, second, third, yieldFarming, yieldFarmingToken, timestamp, payees, constants }
 }
 
-export { mockedDeploy, rawDeploy, Timestamp, waffle, expect, ethers, MULTIPLIER }
+export { mockedDeploy, rawDeploy, Timestamp, waffle, expect, ethers, MULTIPLIER, Record }
