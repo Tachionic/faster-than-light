@@ -69,9 +69,6 @@ contract PaymentSplitter is Context, Ownable {
      * https://solidity.readthedocs.io/en/latest/contracts.html#fallback-function[fallback
      * functions].
      */
-    // receive () external payable virtual {
-    //     emit PaymentReceived(_msgSender(), msg.value);
-    // }
     function deposit(address depositor, uint amount) internal {
         acceptedToken.safeTransferFrom(depositor, address(this), amount);
         emit AcceptedTokenDeposit(depositor, amount);
@@ -123,12 +120,12 @@ contract PaymentSplitter is Context, Ownable {
      * @dev Triggers a transfer to `account` of the amount of tokens they are owed, according to their percentage of the
      * total shares and their previous withdrawals.
      */
-    function release(address payable account) public virtual {
+    function release(address account) public virtual {
         // solhint-disable-next-line reason-string
         require(isPayee(account), "PaymentSplitter: account is not a payee");
 
         uint256 theTotalReleased = totalReleased();
-        uint256 totalReceived = address(this).balance + theTotalReleased;
+        uint256 totalReceived = acceptedToken.balanceOf(address(this))  + theTotalReleased;
         uint256 payment = totalReceived * shares(account) / totalShares() - released(account);
 
         // solhint-disable-next-line reason-string

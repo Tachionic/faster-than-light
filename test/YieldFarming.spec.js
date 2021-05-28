@@ -43,6 +43,13 @@ const mainDeploy = async (_multiplier) => {
   )
   const multiplier = await aBDKMath.fromInt(_multiplier)
   const lockTime = TIMEOUT
+  class Record {
+    constructor (address, shares) {
+      this.address = address
+      this.shares = shares
+    }
+  }
+  const payees = [new Record(first.address, 100), new Record(second.address, 100), new Record(third.address, 100)]
   const yieldFarming = await waffle.deployContract(first, YieldFarming, [
     timestampMock.address,
     acceptedToken.address,
@@ -52,12 +59,12 @@ const mainDeploy = async (_multiplier) => {
     interestRate,
     multiplier,
     lockTime,
-    [first.address, second.address, third.address],
-    [100, 100, 100]
+    payees.map((payee) => { return payee.address }),
+    payees.map((payee) => { return payee.shares })
   ])
   const YieldFarmingToken = await ethers.getContractFactory('YieldFarmingToken')
   const yieldFarmingToken = await YieldFarmingToken.attach(await yieldFarming.yieldFarmingToken())
-  return { acceptedToken, first, second, third, yieldFarming, yieldFarmingToken, timestampMock, INITIAL_BALANCE, DEPLOY_TIMESTAMP, DEPOSIT_TIMESTAMP, UNLOCK_TIMESTAMP }
+  return { acceptedToken, first, second, third, yieldFarming, yieldFarmingToken, timestampMock, payees, INITIAL_BALANCE, DEPLOY_TIMESTAMP, DEPOSIT_TIMESTAMP, UNLOCK_TIMESTAMP }
 }
 
 describe('YieldFarming contract', () => {
@@ -131,17 +138,38 @@ describe('YieldFarming contract', () => {
               .to.emit(deploy.yieldFarming, 'YieldFarmingTokenRelease')
               .withArgs(deploy.first.address, releaseValue)
           })
-          describe('Burn token', async () => {
-            let burnValue
+          describe('After release', async () => {
             beforeEach(async () => {
               await deploy.yieldFarming.releaseTokens()
-              burnValue = 1
-              await deploy.yieldFarmingToken.increaseAllowance(deploy.yieldFarming.address, burnValue)
             })
-            it('Emit YieldFarmingTokenBurn', async () => {
-              await expect(deploy.yieldFarming.burn(burnValue))
-                .to.emit(deploy.yieldFarming, 'YieldFarmingTokenBurn')
-                .withArgs(deploy.first.address, burnValue)
+            describe('Burn tokens', async () => {
+              let burnValue
+              beforeEach(async () => {
+                burnValue = 1
+                await deploy.yieldFarmingToken.increaseAllowance(deploy.yieldFarming.address, burnValue)
+              })
+              it('Emit YieldFarmingTokenBurn', async () => {
+                await expect(deploy.yieldFarming.burn(burnValue))
+                  .to.emit(deploy.yieldFarming, 'YieldFarmingTokenBurn')
+                  .withArgs(deploy.first.address, burnValue)
+              })
+            })
+            describe('Pull payment', async () => {
+              let expectedPayment
+              beforeEach(async () => {
+                expectedPayment = Math.trunc(
+                  deploy.INITIAL_BALANCE * deploy.payees[0].shares /
+                  deploy.payees.reduce(
+                    (totalValue, payee) => { return totalValue + payee.shares },
+                    0
+                  )
+                )
+              })
+              it('Emit PaymentReleased', async () => {
+                await expect(deploy.yieldFarming.release(deploy.first.address))
+                  .to.emit(deploy.yieldFarming, 'PaymentReleased')
+                  .withArgs(deploy.first.address, expectedPayment)
+              })
             })
           })
         })
