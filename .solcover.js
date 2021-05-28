@@ -4,7 +4,6 @@ module.exports = {
     compileCommand: 'npm run compile',
     skipFiles: [
         'abdk-libraries-solidity',
-        'Migrations.sol',
         'ERC20Mock.sol'
     ],
     providerOptions: {

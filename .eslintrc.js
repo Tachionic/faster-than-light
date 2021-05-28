@@ -2,7 +2,6 @@ module.exports = {
   ignorePatterns: ['coverage/'],
   env: {
     es2021: true,
-    'truffle/globals': true, // same as "truffle/truffle": true
     mocha: true
   },
   extends: [
@@ -13,8 +12,5 @@ module.exports = {
     sourceType: 'module'
   },
   rules: {
-  },
-  plugins: [
-    'truffle'
-  ]
+  }
 }

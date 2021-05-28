@@ -1,12 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 
-require('@nomiclabs/hardhat-truffle5');
 require('@nomiclabs/hardhat-solhint');
 require("@nomiclabs/hardhat-ethers");
+require("@nomiclabs/hardhat-waffle");
 require('solidity-coverage');
 require('hardhat-gas-reporter');
-require("@nomiclabs/hardhat-waffle");
 
 for (const f of fs.readdirSync(path.join(__dirname, 'hardhat'))) {
   require(path.join(__dirname, 'hardhat', f));
