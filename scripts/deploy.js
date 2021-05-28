@@ -6,22 +6,22 @@ const deployMe = async (_multiplier) => {
   const LOCK_TIME = 24 * 60 * 60
   const INTEREST_NUMERATOR = 25
   const INTEREST_DENOMINATOR = 10000
-  const INTEREST = {NUMERATOR: INTEREST_NUMERATOR, DENOMINATOR: INTEREST_DENOMINATOR}
+  const INTEREST = { NUMERATOR: INTEREST_NUMERATOR, DENOMINATOR: INTEREST_DENOMINATOR }
   const TOKEN_NAME = 'Interest Faster Than Light'
   const TOKEN_SYMBOL = 'IFTL'
-  const TOKEN = {NAME: TOKEN_NAME, SYMBOL: TOKEN_SYMBOL}
+  const TOKEN = { NAME: TOKEN_NAME, SYMBOL: TOKEN_SYMBOL }
   const safeERC20 = await ethers.getContractAt(
     'SafeERC20',
     '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'
   )
   const MULTIPLIER = _multiplier
-  const constants = { MULTIPLIER, LOCK_TIME, INTEREST, TOKEN}
+  const constants = { MULTIPLIER, LOCK_TIME, INTEREST, TOKEN }
   const [first, second, third, fourth] = waffle.provider.getWallets()
   const payees = [
-    new Record(first.address, 10),    // shield
-    new Record(second.address, 10),   // monetary policy reserve
-    new Record(third.address, 30),    // executive team budget
-    new Record(fourth.address, 50)    // wroking capital
+    new Record(first.address, 10), // shield
+    new Record(second.address, 10), // monetary policy reserve
+    new Record(third.address, 30), // executive team budget
+    new Record(fourth.address, 50) // wroking capital
   ]
   const timestamp = await waffle.deployContract(first, Timestamp)
   return await rawDeploy(timestamp, safeERC20, payees, [first, second, third], constants)
