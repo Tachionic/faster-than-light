@@ -129,7 +129,7 @@ contract PaymentSplitter is Context, Ownable {
         // solhint-disable-next-line reason-string
         require(payment != 0, "PaymentSplitter: account is not due payment");
 
-        record(account).released += payment;
+        payeeArchive.records[account].released += payment;
         payeeArchive.records[address(this)].released += payment;
 
         acceptedToken.safeTransfer(account, payment);
@@ -153,8 +153,8 @@ contract PaymentSplitter is Context, Ownable {
         }
         // solhint-disable-next-line reason-string
         require(shares(account) != _shares, "PaymentSplitter: account already has that many shares");
-        record(account).shares = _shares;
         int256 delta = int256(_shares) - int256(shares(account));
+        payeeArchive.records[account].shares = _shares;
         payeeArchive.records[address(this)].shares = uint256(int256(payeeArchive.records[address(this)].shares) + delta);
         emit PayeeUpdated(account, delta);
     }
@@ -182,35 +182,31 @@ contract PaymentSplitter is Context, Ownable {
      * @param account The address of the payee to add.
      */
     function removePayee(address account) public onlyOwner {
-        uint256 index = getListIndex(payeeArchive.addresses, account);
-        Record memory recordToBeRemoved = record(account);
-        uint256 payeesLength = payeeArchive.addresses.length;
         // solhint-disable-next-line reason-string
-        require(payeesLength > 0, "PaymentSplitter: empty payee list");
-        uint lastRecordIndex = payeesLength-1;
-        address lastRecordPayee = payee(lastRecordIndex);
-        // copy the last element to the deleted spot
-        payeeArchive.records[account] = record(lastRecordPayee);
-        payeeArchive.addresses[index] = lastRecordPayee;
-        // call delete on the last index
-        delete payeeArchive.records[lastRecordPayee];
-        delete payeeArchive.addresses[lastRecordIndex];
-        // decrement the array length
-        payeeArchive.addresses = this.discardLastElement(payeeArchive.addresses, lastRecordIndex);
+        require(payeeArchive.addresses.length > 0, "PaymentSplitter: empty payee list");
+        
+        Record memory recordToBeRemoved = record(account);
+        delete payeeArchive.records[account];
+        remove(payeeArchive.addresses, account);
         payeeArchive.records[address(this)].shares -= recordToBeRemoved.shares;
         emit PayeeRemoved(account);
     }
-
-    function discardLastElement(address[] calldata list, uint lastRecordIndex) external pure returns(address[] memory){
-        return list[0:lastRecordIndex-1];
-    }
-    function getListIndex(address[] memory list, address account) private pure returns(uint256){
+    function getIndex(address[] memory list, address _address) private pure returns(uint256){
         for (uint256 i = 0; i < list.length; i++) {
-            if(list[i] == account){
+            if(list[i] == _address){
                 return i;
             }
         }
         // solhint-disable-next-line reason-string
         revert("PaymentSplitter: account not found");
+    }
+    function remove(address[] storage list, address account) private {
+        remove(list, getIndex(list, account));
+    }
+    function remove(address[] storage list, uint index) private {
+        // Move the last element into the place to delete
+        list[index] = list[list.length - 1];
+        // Remove the last element
+        list.pop();
     }
 }

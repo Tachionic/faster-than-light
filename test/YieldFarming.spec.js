@@ -248,26 +248,30 @@ describe('YieldFarming contract', () => {
                   await expect(deploy.yieldFarming.updatePayee(deploy.third.address, deploy.constants.SHARES.THIRD))
                     .to.be.revertedWith('PaymentSplitter: account already has that many shares')
                 })
-                it('Emit PayeeUpdated when increasing shares', async () => {
-                  const delta = 10
-                  await expect(deploy.yieldFarming.updatePayee(deploy.third.address, deploy.constants.SHARES.THIRD + delta))
-                    .to.emit(deploy.yieldFarming, 'PayeeUpdated')
-                    .withArgs(deploy.third.address, delta)
-                })
                 it('Revert when trying to update payee not being an owner', async () => {
                   const delta = 5
                   await expect(deploy.yieldFarming.connect(deploy.second.address).updatePayee(deploy.first.address, deploy.constants.SHARES.THIRD + delta))
                     .to.be.revertedWith('Ownable: caller is not the owner')
                 })
-                it('Emit PayeeUpdated when decreasing shares', async () => {
-                  const delta = -10
-                  const newShares = deploy.constants.SHARES.THIRD + delta
-                  await expect(deploy.yieldFarming.updatePayee(deploy.third.address, newShares))
-                    .to.emit(deploy.yieldFarming, 'PayeeUpdated')
-                    .withArgs(deploy.third.address, delta)
-                  // FIXME
-                  // expect(await deploy.yieldFarming.shares(deploy.third.address))
-                  //   .to.be.equal(newShares)
+                describe('Changing amount of shares', async () => {
+                  it('Emit PayeeUpdated when increasing shares', async () => {
+                    const delta = 10
+                    const newShares = deploy.constants.SHARES.THIRD + delta
+                    await expect(deploy.yieldFarming.updatePayee(deploy.third.address, newShares))
+                      .to.emit(deploy.yieldFarming, 'PayeeUpdated')
+                      .withArgs(deploy.third.address, delta)
+                    expect(await deploy.yieldFarming.shares(deploy.third.address))
+                      .to.be.equal(newShares)
+                  })
+                  it('Emit PayeeUpdated when decreasing shares', async () => {
+                    const delta = -10
+                    const newShares = deploy.constants.SHARES.THIRD + delta
+                    await expect(deploy.yieldFarming.updatePayee(deploy.third.address, newShares))
+                      .to.emit(deploy.yieldFarming, 'PayeeUpdated')
+                      .withArgs(deploy.third.address, delta)
+                    expect(await deploy.yieldFarming.shares(deploy.third.address))
+                      .to.be.equal(newShares)
+                  })
                 })
                 it('When removing shares with updatePayee', async () => {
                   const newShares = 0
@@ -290,13 +294,13 @@ describe('YieldFarming contract', () => {
                   await expect(deploy.yieldFarming.removePayee(deploy.fourth.address))
                     .to.be.revertedWith('PaymentSplitter: account not found')
                 })
-                // TODO
-                // it.only('When trying to empty payee list', async () => {
-                //   await deploy.yieldFarming.removePayee(deploy.third.address)
-                //   await deploy.yieldFarming.removePayee(deploy.second.address)
-                //   await expect(deploy.yieldFarming.removePayee(deploy.first.address))
-                //     .to.revertedWith('PaymentSplitter: empty payee list')
-                // })
+                it('When trying to empty payee list', async () => {
+                  await deploy.yieldFarming.removePayee(deploy.third.address)
+                  await deploy.yieldFarming.removePayee(deploy.second.address)
+                  await deploy.yieldFarming.removePayee(deploy.first.address)
+                  await expect(deploy.yieldFarming.removePayee(ethers.constants.AddressZero))
+                    .to.revertedWith('PaymentSplitter: empty payee list')
+                })
               })
             })
             describe('Payment splitter', async () => {
@@ -312,16 +316,15 @@ describe('YieldFarming contract', () => {
                 )
               })
               describe('Release payment', async () => {
-                // TODO
-                // describe('When already relased', async () => {
-                //   beforeEach(async () => {
-                //     await deploy.yieldFarming.release(deploy.second.address)
-                //   })
-                //   it.only('Reverts when account is not due payment', async () => {
-                //     await expect(deploy.yieldFarming.release(deploy.second.address))
-                //       .to.be.revertedWith('PaymentSplitter: account is not due payment')
-                //   })
-                // })
+                describe('When already relased', async () => {
+                  beforeEach(async () => {
+                    await deploy.yieldFarming.release(deploy.second.address)
+                  })
+                  it('Reverts when account is not due payment', async () => {
+                    await expect(deploy.yieldFarming.release(deploy.second.address))
+                      .to.be.revertedWith('PaymentSplitter: account is not due payment')
+                  })
+                })
                 it('Emit PaymentReleased', async () => {
                   await expect(deploy.yieldFarming.release(deploy.first.address))
                     .to.emit(deploy.yieldFarming, 'PaymentReleased')
