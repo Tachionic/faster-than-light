@@ -211,6 +211,6 @@ contract PaymentSplitter is Context, Ownable {
             }
         }
         // solhint-disable-next-line reason-string
-        revert("PaymentSplitter: account not found!");
+        revert("PaymentSplitter: account not found");
     }
 }

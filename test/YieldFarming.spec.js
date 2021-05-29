@@ -286,6 +286,10 @@ describe('YieldFarming contract', () => {
                   await expect(deploy.yieldFarming.connect(deploy.second.address).removePayee(deploy.third.address))
                     .to.be.revertedWith('Ownable: caller is not the owner')
                 })
+                it('When trying to remove non payee', async () => {
+                  await expect(deploy.yieldFarming.removePayee(deploy.fourth.address))
+                    .to.be.revertedWith('PaymentSplitter: account not found')
+                })
                 // TODO
                 // it.only('When trying to empty payee list', async () => {
                 //   await deploy.yieldFarming.removePayee(deploy.third.address)
