@@ -225,6 +225,68 @@ describe('YieldFarming contract', () => {
                   .withArgs(deploy.first.address, burnValue)
               })
             })
+            describe('Payment splitter A', async () => {
+              it('Reads payees correctly', async () => {
+                expect(await deploy.yieldFarming.payee(0))
+                  .to.be.equal(deploy.first.address)
+                expect(await deploy.yieldFarming.payee(1))
+                  .to.be.equal(deploy.second.address)
+                expect(await deploy.yieldFarming.payee(2))
+                  .to.be.equal(deploy.third.address)
+              })
+              it('Revert when account is not a payee', async () => {
+                await expect(deploy.yieldFarming.release(deploy.fourth.address))
+                  .to.be.revertedWith('PaymentSplitter: account is not a payee')
+              })
+              describe('Update payee', async () => {
+                it('Revert when account is not a payee', async () => {
+                  await expect(deploy.yieldFarming.updatePayee(deploy.fourth.address, 0))
+                    .to.be.revertedWith('PaymentSplitter: not a payee')
+                })
+                it('Revert when account already has that many shares', async () => {
+                  await expect(deploy.yieldFarming.updatePayee(deploy.third.address, deploy.constants.SHARES.THIRD))
+                    .to.be.revertedWith('PaymentSplitter: account already has that many shares')
+                })
+                it('Emit PayeeUpdated when increasing shares', async () => {
+                  const delta = 10
+                  await expect(deploy.yieldFarming.updatePayee(deploy.third.address, deploy.constants.SHARES.THIRD + delta))
+                    .to.emit(deploy.yieldFarming, 'PayeeUpdated')
+                    .withArgs(deploy.third.address, delta)
+                })
+                it('Revert when trying to update payee not being an owner', async () => {
+                  const delta = 5
+                  await expect(deploy.yieldFarming.connect(deploy.second.address).updatePayee(deploy.first.address, deploy.constants.SHARES.THIRD + delta))
+                    .to.be.revertedWith('Ownable: caller is not the owner')
+                })
+                it('Emit PayeeUpdated when decreasing shares', async () => {
+                  const delta = -10
+                  const newShares = deploy.constants.SHARES.THIRD + delta
+                  await expect(deploy.yieldFarming.updatePayee(deploy.third.address, newShares))
+                    .to.emit(deploy.yieldFarming, 'PayeeUpdated')
+                    .withArgs(deploy.third.address, delta)
+                  // TODO:
+                  // expect(await deploy.yieldFarming.shares(deploy.third.address))
+                  //   .to.be.equal(newShares)
+                })
+                it('When removing shares with updatePayee', async () => {
+                  const newShares = 0
+                  await expect(deploy.yieldFarming.updatePayee(deploy.third.address, newShares))
+                    .to.emit(deploy.yieldFarming, 'PayeeRemoved')
+                    .withArgs(deploy.third.address)
+                })
+              })
+              describe('Remove payee', async () => {
+                it('When removing shares with removePayee', async () => {
+                  await expect(deploy.yieldFarming.removePayee(deploy.third.address))
+                    .to.emit(deploy.yieldFarming, 'PayeeRemoved')
+                    .withArgs(deploy.third.address)
+                })
+                it('When trying to remove shares with removePayee not being an owner', async () => {
+                  await expect(deploy.yieldFarming.connect(deploy.second.address).removePayee(deploy.third.address))
+                    .to.be.revertedWith('Ownable: caller is not the owner')
+                })
+              })
+            })
             describe('Payment splitter', async () => {
               let expectedPayment, expectedTotalShares
               beforeEach(async () => {
@@ -236,14 +298,6 @@ describe('YieldFarming contract', () => {
                   deploy.constants.INITIAL_BALANCE * deploy.payees[0].shares /
                   expectedTotalShares
                 )
-              })
-              it('Reads payees correctly', async () => {
-                expect(await deploy.yieldFarming.payee(0))
-                  .to.be.equal(deploy.first.address)
-                expect(await deploy.yieldFarming.payee(1))
-                  .to.be.equal(deploy.second.address)
-                expect(await deploy.yieldFarming.payee(2))
-                  .to.be.equal(deploy.third.address)
               })
               describe('Release payment', async () => {
                 // describe('When already relased', async () => {
@@ -259,10 +313,6 @@ describe('YieldFarming contract', () => {
                   await expect(deploy.yieldFarming.release(deploy.first.address))
                     .to.emit(deploy.yieldFarming, 'PaymentReleased')
                     .withArgs(deploy.first.address, expectedPayment)
-                })
-                it('Revert when account is not a payee', async () => {
-                  await expect(deploy.yieldFarming.release(deploy.fourth.address))
-                    .to.be.revertedWith('PaymentSplitter: account is not a payee')
                 })
                 describe('After payment release', async () => {
                   beforeEach(async () => {

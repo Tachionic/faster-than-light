@@ -26,12 +26,16 @@ const mockedDeploy = async (_multiplier) => {
   const TOKEN_NAME = 'A Token name'
   const TOKEN_SYMBOL = 'A Token symbol'
   const TOKEN = { NAME: TOKEN_NAME, SYMBOL: TOKEN_SYMBOL }
-  const constants = { MULTIPLIER, LOCK_TIME, INITIAL_BALANCE, INTEREST, TIMESTAMPS, TOKEN }
+  const FIRST_SHARES = 100
+  const SECOND_SHARES = 100
+  const THIRD_SHARES = 100
+  const SHARES = { FIRST: FIRST_SHARES, SECOND: SECOND_SHARES, THIRD: THIRD_SHARES }
+  const constants = { MULTIPLIER, LOCK_TIME, INITIAL_BALANCE, INTEREST, TIMESTAMPS, TOKEN, SHARES }
   const [first, second, third, fourth] = waffle.provider.getWallets()
   const payees = [
-    new Record(first.address, 100),
-    new Record(second.address, 100),
-    new Record(third.address, 100)
+    new Record(first.address, SHARES.FIRST),
+    new Record(second.address, SHARES.SECOND),
+    new Record(third.address, SHARES.THIRD)
   ]
   const timestamp = await waffle.deployMockContract(first, Timestamp.abi)
   await timestamp.mock.getTimestamp.returns(constants.TIMESTAMPS.DEPLOY)

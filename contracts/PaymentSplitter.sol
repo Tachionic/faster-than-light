@@ -33,7 +33,7 @@ struct RecordArchive {
 contract PaymentSplitter is Context, Ownable {
     using SafeERC20 for IERC20;
     event PayeeAdded(address account, uint256 shares);
-    event PayeeUpdated(address account, uint256 shares);
+    event PayeeUpdated(address account, int256 shares);
     event PayeeRemoved(address account);
     event PaymentReleased(address to, uint256 amount);
     event AcceptedTokenDeposit(address depositor, uint amount);
@@ -153,9 +153,9 @@ contract PaymentSplitter is Context, Ownable {
         }
         // solhint-disable-next-line reason-string
         require(shares(account) != _shares, "PaymentSplitter: account already has that many shares");
-        uint delta = _shares - shares(account);
         record(account).shares = _shares;
-        payeeArchive.records[address(this)].shares += delta;
+        int256 delta = int256(_shares) - int256(shares(account));
+        payeeArchive.records[address(this)].shares = uint256(int256(payeeArchive.records[address(this)].shares) + delta);
         emit PayeeUpdated(account, delta);
     }
 
