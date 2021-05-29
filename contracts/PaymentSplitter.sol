@@ -182,19 +182,18 @@ contract PaymentSplitter is Context, Ownable {
      * @param account The address of the payee to add.
      */
     function removePayee(address account) public onlyOwner {
-        // solhint-disable-next-line reason-string
-        require(account != address(0), "PaymentSplitter: account is the zero address");
         uint256 index = getListIndex(payeeArchive.addresses, account);
         Record memory recordToBeRemoved = record(account);
         uint256 payeesLength = payeeArchive.addresses.length;
-        require(payeesLength > 0, "Empty payee list!");
+        // solhint-disable-next-line reason-string
+        require(payeesLength > 0, "PaymentSplitter: empty payee list");
         uint lastRecordIndex = payeesLength-1;
         address lastRecordPayee = payee(lastRecordIndex);
         // copy the last element to the deleted spot
         payeeArchive.records[account] = record(lastRecordPayee);
         payeeArchive.addresses[index] = lastRecordPayee;
         // call delete on the last index
-        delete payeeArchive.records[payee(lastRecordIndex)];
+        delete payeeArchive.records[lastRecordPayee];
         delete payeeArchive.addresses[lastRecordIndex];
         // decrement the array length
         payeeArchive.addresses = this.discardLastElement(payeeArchive.addresses, lastRecordIndex);
@@ -211,6 +210,7 @@ contract PaymentSplitter is Context, Ownable {
                 return i;
             }
         }
-        revert("account not found!");
+        // solhint-disable-next-line reason-string
+        revert("PaymentSplitter: account not found!");
     }
 }

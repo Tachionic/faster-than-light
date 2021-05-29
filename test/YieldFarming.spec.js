@@ -161,6 +161,7 @@ describe('YieldFarming contract', () => {
       })
       it('TokenTimeLock: release time is before current time', async () => {
         await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.DEPLOY - 1)
+        // FIXME
         try {
           await expect(deploy.yieldFarming.deposit(depositValue))
             .to.be.revertedWith('TokenTimeLock: release time is before current time')
@@ -264,7 +265,7 @@ describe('YieldFarming contract', () => {
                   await expect(deploy.yieldFarming.updatePayee(deploy.third.address, newShares))
                     .to.emit(deploy.yieldFarming, 'PayeeUpdated')
                     .withArgs(deploy.third.address, delta)
-                  // TODO:
+                  // FIXME
                   // expect(await deploy.yieldFarming.shares(deploy.third.address))
                   //   .to.be.equal(newShares)
                 })
@@ -285,6 +286,13 @@ describe('YieldFarming contract', () => {
                   await expect(deploy.yieldFarming.connect(deploy.second.address).removePayee(deploy.third.address))
                     .to.be.revertedWith('Ownable: caller is not the owner')
                 })
+                // TODO
+                // it.only('When trying to empty payee list', async () => {
+                //   await deploy.yieldFarming.removePayee(deploy.third.address)
+                //   await deploy.yieldFarming.removePayee(deploy.second.address)
+                //   await expect(deploy.yieldFarming.removePayee(deploy.first.address))
+                //     .to.revertedWith('PaymentSplitter: empty payee list')
+                // })
               })
             })
             describe('Payment splitter', async () => {
@@ -300,6 +308,7 @@ describe('YieldFarming contract', () => {
                 )
               })
               describe('Release payment', async () => {
+                // TODO
                 // describe('When already relased', async () => {
                 //   beforeEach(async () => {
                 //     await deploy.yieldFarming.release(deploy.second.address)
