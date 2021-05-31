@@ -78,7 +78,7 @@ const rawDeploy = async (timestamp, acceptedToken, payees, accounts, constants) 
     payees.map((payee) => { return payee.shares })
   ])
   const YieldFarmingToken = await ethers.getContractFactory('YieldFarmingToken')
-  const yieldFarmingToken = await YieldFarmingToken.attach(await yieldFarming.yieldFarmingToken())
+  const yieldFarmingToken = YieldFarmingToken.attach(await yieldFarming.yieldFarmingToken())
   return { acceptedToken, rewardCalculator, first, second, third, fourth, yieldFarming, yieldFarmingToken, timestamp, payees, constants }
 }
 

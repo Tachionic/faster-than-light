@@ -144,7 +144,7 @@ describe('YieldFarming contract', () => {
     beforeEach(async () => {
       deploy = await mockedDeploy(MULTIPLIER)
     })
-    it('Ownership', async () => {
+    it('Ownership transfer', async () => {
       const firstOwner = await deploy.yieldFarming.owner()
       expect(firstOwner).to.equal(deploy.first.address)
       await expect(deploy.yieldFarming.transferOwnership(deploy.second.address))

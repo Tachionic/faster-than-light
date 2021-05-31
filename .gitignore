@@ -7,4 +7,5 @@ coverage/
 .envrc
 artifacts/
 cache/
+deployments/
 deploy.json
