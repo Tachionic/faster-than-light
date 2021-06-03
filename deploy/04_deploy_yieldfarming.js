@@ -51,4 +51,4 @@ export default async ({ getNamedAccounts, deployments }) => {
   })
 }
 export const tags = ['YieldFarming']
-module.exports.dependencies = ['ABDKMathQuad', 'Timestamp', 'ERC20Mock', 'RewardCalculator'] // this ensure the ABDKMathQuad script above is executed first, so `deployments.get('ABDKMathQuad')` succeeds
+module.exports.dependencies = ['ABDKMathQuad', 'Timestamp', 'RewardCalculator'] // this ensure the ABDKMathQuad script above is executed first, so `deployments.get('ABDKMathQuad')` succeeds
