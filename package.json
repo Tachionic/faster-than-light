@@ -25,6 +25,9 @@
     "ethers": "^5.2.0",
     "flatted": "^3.1.1",
     "hardhat": "^2.3.0",
+    "hardhat-deploy": "^0.7.10",
+    "hardhat-deploy-ethers": "^0.3.0-beta.7",
+    "hardhat-ethers": "^1.0.1",
     "hardhat-gas-reporter": "^1.0.4",
     "husky": "^6.0.0",
     "solhint": "^3.3.5",
@@ -42,7 +45,7 @@
     "coveralls": "yarn coverage && cat coverage/lcov.info | coveralls",
     "prepare": "husky install",
     "gas-report": "env ENABLE_GAS_REPORT=1 npm run test",
-    "deploy": "node --require esm node_modules/.bin/hardhat run scripts/deploy.js"
+    "deploy": "node --require esm node_modules/.bin/hardhat deploy --network"
   },
   "author": "David Kneel",
   "license": "ISC"
