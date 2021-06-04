@@ -13,6 +13,7 @@
     "@openzeppelin/contracts": "^4.1.0",
     "@openzeppelin/test-helpers": "^0.5.11",
     "chai": "^4.3.4",
+    "chalk": "^4.1.1",
     "coveralls": "^3.1.0",
     "eslint": "^7.27.0",
     "eslint-config-standard": "^16.0.3",
@@ -30,6 +31,7 @@
     "hardhat-ethers": "^1.0.1",
     "hardhat-gas-reporter": "^1.0.4",
     "husky": "^6.0.0",
+    "ora": "^5.4.0",
     "solhint": "^3.3.6",
     "solidity-coverage": "^0.7.16",
     "typescript": "^4.3.2"
@@ -37,10 +39,10 @@
   "scripts": {
     "solhint": "solhint 'contracts/**/*.sol'",
     "solhint:fix": "solhint --fix 'contracts/**/*.sol'",
-    "compile": "hardhat compile",
-    "test": "node --require esm node_modules/.bin/hardhat test",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
+    "compile": "hardhat compile",
+    "test": "node --require esm node_modules/.bin/hardhat test",
     "coverage": "node --require esm node_modules/.bin/hardhat coverage",
     "coveralls": "yarn coverage && cat coverage/lcov.info | coveralls",
     "prepare": "husky install",
