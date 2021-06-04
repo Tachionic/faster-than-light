@@ -8,7 +8,7 @@ import ABDKMathQuad from '../artifacts/contracts/abdk-libraries-solidity/ABDKMat
 import YieldFarming from '../artifacts/contracts/YieldFarming.sol/YieldFarming.json'
 import Timestamp from '../artifacts/contracts/Timestamp.sol/Timestamp.json'
 import ERC20Mock from '../artifacts/contracts/ERC20Mock.sol/ERC20Mock.json'
-import { Record } from './helpers/Record'
+import { RecordList } from '../src/utils/RecordList'
 use(waffleChai)
 
 describe('YieldFarming contract', () => {
@@ -44,11 +44,12 @@ describe('YieldFarming contract', () => {
         await aBDKMath.fromInt(constants.INTEREST.DENOMINATOR)
       )
       multiplier = await aBDKMath.fromInt(constants.MULTIPLIER)
-      payees = [
-        new Record(first.address, 100),
-        new Record(second.address, 100),
-        new Record(third.address, 100)
-      ]
+      payees = new RecordList([first.address, second.address, third.address], [100, 100, 100])
+      // payees = [
+      //   new Record(first.address, 100),
+      //   new Record(second.address, 100),
+      //   new Record(third.address, 100)
+      // ]
       timestamp = await waffle.deployContract(first, Timestamp)
       acceptedToken = await waffle.deployContract(first, ERC20Mock, [
         'ERC20Mock name',
@@ -57,7 +58,7 @@ describe('YieldFarming contract', () => {
         constants.INITIAL_BALANCE])
     })
     it('Shares 0', async () => {
-      payees[1].shares = 0
+      payees.records[1].shares = 0
       await expect(waffle.deployContract(first, YieldFarming, [
         timestamp.address,
         acceptedToken.address,
@@ -67,13 +68,13 @@ describe('YieldFarming contract', () => {
         interestRate,
         multiplier,
         constants.LOCK_TIME,
-        payees.map((payee) => { return payee.address }),
-        payees.map((payee) => { return payee.shares })
+        payees.addresses(),
+        payees.sharesList()
       ]))
         .to.be.revertedWith('PaymentSplitter: shares are 0')
     })
     it('Account is the zero address', async () => {
-      payees[1].address = ethers.constants.AddressZero
+      payees.records[1].address = ethers.constants.AddressZero
       await expect(waffle.deployContract(first, YieldFarming, [
         timestamp.address,
         acceptedToken.address,
@@ -83,13 +84,13 @@ describe('YieldFarming contract', () => {
         interestRate,
         multiplier,
         constants.LOCK_TIME,
-        payees.map((payee) => { return payee.address }),
-        payees.map((payee) => { return payee.shares })
+        payees.addresses(),
+        payees.sharesList()
       ]))
         .to.be.revertedWith('PaymentSplitter: account is the zero address')
     })
     it('Account is already payee', async () => {
-      payees[1].address = payees[0].address
+      payees.records[1].address = payees.records[0].address
       await expect(waffle.deployContract(first, YieldFarming, [
         timestamp.address,
         acceptedToken.address,
@@ -99,13 +100,13 @@ describe('YieldFarming contract', () => {
         interestRate,
         multiplier,
         constants.LOCK_TIME,
-        payees.map((payee) => { return payee.address }),
-        payees.map((payee) => { return payee.shares })
+        payees.addresses(),
+        payees.sharesList()
       ]))
         .to.be.revertedWith('PaymentSplitter: account is already payee')
     })
     it('Different payee address\' length to payee shares\' length', async () => {
-      const payeeAddresses = payees.map((payee) => { return payee.address })
+      const payeeAddresses = payees.addresses()
       payeeAddresses.pop() // remove last element
       await expect(waffle.deployContract(first, YieldFarming, [
         timestamp.address,
@@ -117,12 +118,12 @@ describe('YieldFarming contract', () => {
         multiplier,
         constants.LOCK_TIME,
         payeeAddresses,
-        payees.map((payee) => { return payee.shares })
+        payees.sharesList()
       ]))
         .to.be.revertedWith('PaymentSplitter: payees and shares length mismatch')
     })
     it('No payees', async () => {
-      const payeeAddresses = payees.map((payee) => { return payee.address })
+      const payeeAddresses = payees.addresses()
       payeeAddresses.pop() // remove last element
       await expect(waffle.deployContract(first, YieldFarming, [
         timestamp.address,
@@ -306,12 +307,9 @@ describe('YieldFarming contract', () => {
             describe('Payment splitter', async () => {
               let expectedPayment, expectedTotalShares
               beforeEach(async () => {
-                expectedTotalShares = deploy.payees.reduce(
-                  (totalValue, payee) => { return totalValue + payee.shares },
-                  0
-                )
+                expectedTotalShares = deploy.payees.totalShares()
                 expectedPayment = Math.trunc(
-                  deploy.constants.INITIAL_BALANCE * deploy.payees[0].shares /
+                  deploy.constants.INITIAL_BALANCE * deploy.payees.records[0].shares /
                   expectedTotalShares
                 )
               })

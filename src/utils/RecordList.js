@@ -23,6 +23,13 @@ class RecordList {
   sharesList = () => {
     return this.records.map((record) => { return record.shares })
   }
+
+  totalShares = () => {
+    return this.records.reduce(
+      (totalValue, record) => { return totalValue + record.shares },
+      0
+    )
+  }
 }
 
 export { RecordList }

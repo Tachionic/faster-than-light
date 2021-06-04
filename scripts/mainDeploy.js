@@ -7,7 +7,7 @@ import ABDKMathQuad from '../artifacts/contracts/abdk-libraries-solidity/ABDKMat
 import YieldFarming from '../artifacts/contracts/YieldFarming.sol/YieldFarming.json'
 import ERC20Mock from '../artifacts/contracts/ERC20Mock.sol/ERC20Mock.json'
 import Timestamp from '../artifacts/contracts/Timestamp.sol/Timestamp.json'
-import { Record } from '../test/helpers/Record'
+import { RecordList } from '../src/utils/RecordList'
 use(waffleChai)
 
 const MULTIPLIER = 1E12
@@ -32,11 +32,7 @@ const mockedDeploy = async (_multiplier) => {
   const SHARES = { FIRST: FIRST_SHARES, SECOND: SECOND_SHARES, THIRD: THIRD_SHARES }
   const constants = { MULTIPLIER, LOCK_TIME, INITIAL_BALANCE, INTEREST, TIMESTAMPS, TOKEN, SHARES }
   const [first, second, third, fourth] = waffle.provider.getWallets()
-  const payees = [
-    new Record(first.address, SHARES.FIRST),
-    new Record(second.address, SHARES.SECOND),
-    new Record(third.address, SHARES.THIRD)
-  ]
+  const payees = new RecordList([first.address, second.address, third.address], [SHARES.FIRST, SHARES.SECOND, SHARES.THIRD])
   const timestamp = await waffle.deployMockContract(first, Timestamp.abi)
   await timestamp.mock.getTimestamp.returns(constants.TIMESTAMPS.DEPLOY)
   expect(await timestamp.getTimestamp()).to.be.bignumber.equal(constants.TIMESTAMPS.DEPLOY)
@@ -74,12 +70,12 @@ const rawDeploy = async (timestamp, acceptedToken, payees, accounts, constants) 
     interestRate,
     multiplier,
     constants.LOCK_TIME,
-    payees.map((payee) => { return payee.address }),
-    payees.map((payee) => { return payee.shares })
+    payees.addresses(),
+    payees.sharesList()
   ])
   const YieldFarmingToken = await ethers.getContractFactory('YieldFarmingToken')
   const yieldFarmingToken = YieldFarmingToken.attach(await yieldFarming.yieldFarmingToken())
   return { acceptedToken, rewardCalculator, first, second, third, fourth, yieldFarming, yieldFarmingToken, timestamp, payees, constants }
 }
 
-export { mockedDeploy, rawDeploy, Timestamp, waffle, expect, ethers, MULTIPLIER, Record }
+export { mockedDeploy, rawDeploy, Timestamp, waffle, expect, ethers, MULTIPLIER, RecordList }
