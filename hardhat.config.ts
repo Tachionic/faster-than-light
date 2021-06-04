@@ -17,14 +17,14 @@ for (const f of fs.readdirSync(path.join(__dirname, 'hardhat'))) {
 const enableGasReport = !!process.env.ENABLE_GAS_REPORT;
 const enableProduction = process.env.COMPILE_MODE === 'production';
 
-const { MNEMONIC, PK, INFURA_KEY } = process.env;
+const { MNEMONIC, PKD, PK1, PK2, PK3, PK4, INFURA_KEY } = process.env;
 
 const DEFAULT_MNEMONIC =
   "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat";
 
 const sharedNetworkConfig: HttpNetworkUserConfig = {};
-if (PK) {
-  sharedNetworkConfig.accounts = [PK];
+if (PKD && PK1 && PK2 && PK3 && PK4) {
+  sharedNetworkConfig.accounts = [PKD, PK1, PK2, PK3, PK4];
 } else {
   sharedNetworkConfig.accounts = {
     mnemonic: MNEMONIC || DEFAULT_MNEMONIC,
