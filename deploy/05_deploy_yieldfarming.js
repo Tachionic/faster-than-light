@@ -17,8 +17,8 @@ export default async ({ getNamedAccounts, deployments }) => {
   //     //   '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'
   //     // )
       const uChildERC20ProxyContract = await deployments.get('UChildERC20Proxy')
-      // const uChildERC20Proxy = await ethers.getContractAt('UChildERC20Proxy', uChildERC20ProxyContract.address)
-      // const implementation = uChildERC20Proxy.implementation()
+      const uChildERC20Proxy = await ethers.getContractAt('UChildERC20Proxy', uChildERC20ProxyContract.address)
+      const implementation = uChildERC20Proxy.implementation()
       break
     default:
   //     // const timestamp = await ethers.getContractAt("Timestamp", timestampContract.address)
@@ -54,4 +54,4 @@ export default async ({ getNamedAccounts, deployments }) => {
   // })
 }
 export const tags = ['YieldFarming']
-module.exports.dependencies = ['ABDKMathQuad', 'Timestamp', 'RewardCalculator', 'AcceptedToken'] // this ensure the ABDKMathQuad script above is executed first, so `deployments.get('ABDKMathQuad')` succeeds
+module.exports.dependencies = ['ABDKMathQuad', 'Timestamp', 'RewardCalculator', 'UChildAdministrableERC20', 'UChildAdministrableERC20'] // this ensure the ABDKMathQuad script above is executed first, so `deployments.get('ABDKMathQuad')` succeeds
