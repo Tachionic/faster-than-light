@@ -22,7 +22,7 @@ export default async ({ getNamedAccounts, deployments }) => {
         let spinner = ora(`${chalk.blue('Copying deployment artifacts...')}`);
         spinner.color = 'cyan'
         spinner.start()
-        const { stdout, stderr } = await exec(`find AcceptedToken/deployments/${hre.network.name} -name '*.json' | xargs cp -t deployments/${hre.network.name}`);
+        const { stdout, stderr } = await exec(`. scripts/copy.sh && copy ${hre.network.name}`);
         if (stderr) {
             spinner.fail('Deployment artifacts copying failed❗')
             console.error(`error: ${chalk.red(`${stderr}`)}`)
