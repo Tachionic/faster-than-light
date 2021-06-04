@@ -5,13 +5,13 @@ import { ethers } from 'hardhat'
 export default async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments
   const { deployer, first, second, third, fourth } = await getNamedAccounts()
-  
+
   const aBDKMathContract = await deployments.get('ABDKMathQuad')
   const aBDKMath = await ethers.getContractAt('ABDKMathQuad', aBDKMathContract.address)
-  
+
   const timestampContract = await deployments.get('Timestamp')
   const timestamp = await ethers.getContractAt('Timestamp', timestampContract.address)
-  
+
   const uChildERC20ProxyContract = await deployments.get('UChildERC20Proxy')
   const uChildERC20Proxy = await ethers.getContractAt('UChildERC20Proxy', uChildERC20ProxyContract.address)
   // const uChildAdministrableERC20 = await ethers.getContractAt(
@@ -22,10 +22,10 @@ export default async ({ getNamedAccounts, deployments }) => {
     'contracts/UChildAdministrableERC20.sol:SafeERC20',
     await uChildERC20Proxy.implementation()
   )
-  
+
   const rewardCalculatorContract = await deployments.get('RewardCalculator')
-  const rewardCalculator = await ethers.getContractAt("RewardCalculator", rewardCalculatorContract.address)
-  
+  const rewardCalculator = await ethers.getContractAt('RewardCalculator', rewardCalculatorContract.address)
+
   const interestRate = await aBDKMath.div(
     await aBDKMath.fromInt(constants.INTEREST.NUMERATOR),
     await aBDKMath.fromInt(constants.INTEREST.DENOMINATOR)

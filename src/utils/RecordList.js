@@ -1,4 +1,4 @@
-import { assert } from "chai"
+import { assert } from 'chai'
 
 class Record {
   constructor (address, shares) {
@@ -9,15 +9,17 @@ class Record {
 
 class RecordList {
   records
-  constructor (addresses, sharesList){
-    assert(addresses.length == sharesList.length)
+  constructor (addresses, sharesList) {
+    assert(addresses.length === sharesList.length)
     this.records = addresses.map((address, index) => {
       return new Record(address, sharesList[index])
     })
   }
+
   addresses = () => {
     return this.records.map((record) => { return record.address })
   }
+
   sharesList = () => {
     return this.records.map((record) => { return record.shares })
   }
