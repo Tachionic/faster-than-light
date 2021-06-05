@@ -314,7 +314,7 @@ describe('YieldFarming contract', () => {
                 )
               })
               describe('Release payment', async () => {
-                describe('When already relased', async () => {
+                describe('When already released', async () => {
                   beforeEach(async () => {
                     await deploy.yieldFarming.release(deploy.second.address)
                   })
