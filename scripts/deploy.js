@@ -16,7 +16,7 @@ const deployMe = async (_multiplier) => {
   )
   const MULTIPLIER = _multiplier
   const constants = { MULTIPLIER, LOCK_TIME, INTEREST, TOKEN }
-  const [first, second, third, fourth] = waffle.provider.getWallets()
+  const [first, second, third, fourth] = await ethers.getSigners()
   const payees = new RecordList([first.address, second.address, third.address, fourth.address], [10, 10, 30, 50])
   const timestamp = await waffle.deployContract(first, Timestamp)
   return await rawDeploy(timestamp, safeERC20, payees, [first, second, third, fourth], constants)

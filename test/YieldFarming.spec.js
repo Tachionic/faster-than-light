@@ -25,7 +25,7 @@ describe('YieldFarming contract', () => {
       const TOKEN_SYMBOL = 'A Token symbol'
       const TOKEN = { NAME: TOKEN_NAME, SYMBOL: TOKEN_SYMBOL }
       constants = { TOKEN, INTEREST, LOCK_TIME, MULTIPLIER, INITIAL_BALANCE }
-      const [a, b, c] = waffle.provider.getWallets()
+      const [a, b, c] = await ethers.getSigners()
       first = a
       second = b
       third = c
@@ -145,6 +145,34 @@ describe('YieldFarming contract', () => {
     beforeEach(async () => {
       deploy = await mockedDeploy(MULTIPLIER)
     })
+    describe('Shares transfer', async () => {
+      let transferrer, destinatary, amountToTransfer, transferrerInititalShares, destinataryInititalShares
+      beforeEach(async () => {
+        transferrer = deploy.second
+        destinatary = deploy.third
+        amountToTransfer = 1
+        transferrerInititalShares = deploy.constants.SHARES.SECOND
+        destinataryInititalShares = deploy.constants.SHARES.THIRD
+      })
+      it('Emit SharesTransferred', async () => {
+        await expect(deploy.yieldFarming.connect(transferrer).transferShares(destinatary.address, amountToTransfer))
+          .to.emit(deploy.yieldFarming, 'SharesTransferred')
+          .withArgs(transferrer.address, destinatary.address, amountToTransfer)
+      })
+      describe('After transfer', async () => {
+        beforeEach(async () => {
+          await deploy.yieldFarming.connect(transferrer).transferShares(destinatary.address, amountToTransfer)
+        })
+        it('Deduct from transferrer', async () => {
+          expect(await deploy.yieldFarming.shares(transferrer.address))
+            .to.be.equal(transferrerInititalShares - amountToTransfer)
+        })
+        it('Credit to destinatary address', async () => {
+          expect(await deploy.yieldFarming.shares(destinatary.address))
+            .to.be.equal(destinataryInititalShares + amountToTransfer)
+        })
+      })
+    })
     it('Ownership transfer', async () => {
       const firstOwner = await deploy.yieldFarming.owner()
       expect(firstOwner).to.equal(deploy.first.address)
@@ -251,7 +279,7 @@ describe('YieldFarming contract', () => {
                 })
                 it('Revert when trying to update payee not being an owner', async () => {
                   const delta = 5
-                  await expect(deploy.yieldFarming.connect(deploy.second.address).updatePayee(deploy.first.address, deploy.constants.SHARES.THIRD + delta))
+                  await expect(deploy.yieldFarming.connect(deploy.second).updatePayee(deploy.first.address, deploy.constants.SHARES.THIRD + delta))
                     .to.be.revertedWith('Ownable: caller is not the owner')
                 })
                 describe('Changing amount of shares', async () => {
@@ -288,7 +316,7 @@ describe('YieldFarming contract', () => {
                     .withArgs(deploy.third.address)
                 })
                 it('When trying to remove shares with removePayee not being an owner', async () => {
-                  await expect(deploy.yieldFarming.connect(deploy.second.address).removePayee(deploy.third.address))
+                  await expect(deploy.yieldFarming.connect(deploy.second).removePayee(deploy.third.address))
                     .to.be.revertedWith('Ownable: caller is not the owner')
                 })
                 it('When trying to remove non payee', async () => {

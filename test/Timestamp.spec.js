@@ -1,5 +1,5 @@
 import { waffleChai } from '@ethereum-waffle/chai'
-import { waffle } from 'hardhat'
+import { waffle, ethers } from 'hardhat'
 import { use, expect } from 'chai'
 import Timestamp from '../artifacts/contracts/Timestamp.sol/Timestamp.json'
 // eslint-disable-next-line no-unused-vars
@@ -10,7 +10,7 @@ describe('Timestamp contract', () => {
   const deploy = {}
   beforeEach(async () => {
     // // eslint-disable-next-line no-unused-vars
-    const [first] = waffle.provider.getWallets()
+    const [first] = await ethers.getSigners()
     deploy.timestamp = await waffle.deployContract(first, Timestamp)
     deploy.first = first
   })

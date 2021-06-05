@@ -31,7 +31,7 @@ const mockedDeploy = async (_multiplier) => {
   const THIRD_SHARES = 100
   const SHARES = { FIRST: FIRST_SHARES, SECOND: SECOND_SHARES, THIRD: THIRD_SHARES }
   const constants = { MULTIPLIER, LOCK_TIME, INITIAL_BALANCE, INTEREST, TIMESTAMPS, TOKEN, SHARES }
-  const [first, second, third, fourth] = waffle.provider.getWallets()
+  const [first, second, third, fourth] = await ethers.getSigners()
   const payees = new RecordList([first.address, second.address, third.address], [SHARES.FIRST, SHARES.SECOND, SHARES.THIRD])
   const timestamp = await waffle.deployMockContract(first, Timestamp.abi)
   await timestamp.mock.getTimestamp.returns(constants.TIMESTAMPS.DEPLOY)

@@ -37,6 +37,7 @@ contract PaymentSplitter is Context, Ownable {
     event PayeeRemoved(address account);
     event PaymentReleased(address to, uint256 amount);
     event AcceptedTokenDeposit(address depositor, uint amount);
+    event SharesTransferred(address transferrer, address to, uint sharesAmount);
 
     IERC20 immutable private acceptedToken;
     RecordArchive private payeeArchive;
@@ -141,14 +142,34 @@ contract PaymentSplitter is Context, Ownable {
     }
 
     /**
+     * @dev Transfer shares.
+     * @param to The address of the shares destinatary to transfer to.
+     * @param sharesAmount The number of shares to be transfered by the transferrer.
+     */
+    function transferShares(address to, uint256 sharesAmount) public {
+        address transferrer = _msgSender();
+        require(isPayee(transferrer), "PaymentSplitter: not a payee");
+        // solhint-disable-next-line reason-string
+        require(shares(transferrer) >= sharesAmount, "PaymentSplitter: not enough shares balance");
+        // Deduct from transferrer shares balance
+        _updatePayee(transferrer, shares(transferrer)-sharesAmount);
+        if(isPayee(to)){
+            _updatePayee(to, shares(to)+sharesAmount);
+        }else{
+            _addPayee(to, sharesAmount);
+        }
+        emit SharesTransferred(transferrer, to, sharesAmount);
+    }
+
+    /**
      * @dev Add a new payee to the contract.
      * @param account The address of the payee to add.
      * @param _shares The number of shares owned by the payee.
      */
-    function updatePayee(address account, uint256 _shares) public onlyOwner {
+    function _updatePayee(address account, uint256 _shares) private {
         require(isPayee(account), "PaymentSplitter: not a payee");
         if (_shares == 0) {
-            removePayee(account);
+            _removePayee(account);
             return;
         }
         // solhint-disable-next-line reason-string
@@ -164,7 +185,7 @@ contract PaymentSplitter is Context, Ownable {
      * @param account The address of the payee to add.
      * @param _shares The number of shares owned by the payee.
      */
-    function addPayee(address account, uint256 _shares) public onlyOwner {
+    function _addPayee(address account, uint256 _shares) private {
         // solhint-disable-next-line reason-string
         require(account != address(0), "PaymentSplitter: account is the zero address");
         require(_shares > 0, "PaymentSplitter: shares are 0");
@@ -179,15 +200,15 @@ contract PaymentSplitter is Context, Ownable {
 
     /**
      * @dev Remove a payee from the contract.
-     * @param account The address of the payee to add.
+     * @param account The address of the payee to remove.
      */
-    function removePayee(address account) public onlyOwner {
+    function _removePayee(address account) private {
         // solhint-disable-next-line reason-string
         require(payeeArchive.addresses.length > 0, "PaymentSplitter: empty payee list");
         
         Record memory recordToBeRemoved = record(account);
         delete payeeArchive.records[account];
-        remove(payeeArchive.addresses, account);
+        _remove(payeeArchive.addresses, account);
         payeeArchive.records[address(this)].shares -= recordToBeRemoved.shares;
         emit PayeeRemoved(account);
     }
@@ -200,13 +221,39 @@ contract PaymentSplitter is Context, Ownable {
         // solhint-disable-next-line reason-string
         revert("PaymentSplitter: account not found");
     }
-    function remove(address[] storage list, address account) private {
-        remove(list, getIndex(list, account));
+    function _remove(address[] storage list, address account) private {
+        _remove(list, getIndex(list, account));
     }
-    function remove(address[] storage list, uint index) private {
+    function _remove(address[] storage list, uint index) private {
         // Move the last element into the place to delete
         list[index] = list[list.length - 1];
         // Remove the last element
         list.pop();
+    }
+
+    /**
+     * @dev Add a new payee to the contract.
+     * @param account The address of the payee to add.
+     * @param _shares The number of shares owned by the payee.
+     */
+    function updatePayee(address account, uint256 _shares) public onlyOwner {
+        _updatePayee(account, _shares);
+    }
+
+    /**
+     * @dev Add a new payee to the contract.
+     * @param account The address of the payee to add.
+     * @param _shares The number of shares owned by the payee.
+     */
+    function addPayee(address account, uint256 _shares) public onlyOwner {
+        _addPayee(account, _shares);
+    }
+
+    /**
+     * @dev Remove a payee from the contract.
+     * @param account The address of the payee to remove.
+     */
+    function removePayee(address account) public onlyOwner {
+        _removePayee(account);
     }
 }
