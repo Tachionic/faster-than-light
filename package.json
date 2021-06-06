@@ -1,5 +1,4 @@
 {
-  "dependencies": {},
   "name": "faster-than-light",
   "version": "1.0.0",
   "description": "Faster Than Light smart contracts",
@@ -28,7 +27,6 @@
     "flatted": "^3.1.1",
     "hardhat": "^2.3.0",
     "hardhat-deploy": "^0.7.10",
-    "hardhat-deploy-ethers": "^0.3.0-beta.8",
     "hardhat-ethers": "^1.0.1",
     "hardhat-gas-reporter": "^1.0.4",
     "husky": "^6.0.0",
@@ -52,5 +50,8 @@
     "deploy:legacy": "node --require esm node_modules/.bin/hardhat run scripts/deploy.js --network"
   },
   "author": "David Kneel",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "hardhat-deploy-ethers": "^0.3.0-beta.8"
+  }
 }
