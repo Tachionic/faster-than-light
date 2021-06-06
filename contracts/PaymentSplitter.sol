@@ -148,7 +148,8 @@ contract PaymentSplitter is Context, Ownable {
      */
     function transferShares(address to, uint256 sharesAmount) public {
         address transferrer = _msgSender();
-        require(isPayee(transferrer), "PaymentSplitter: not a payee");
+        // solhint-disable-next-line reason-string
+        require(isPayee(transferrer), "PaymentSplitter: transferrer not a payee");
         // solhint-disable-next-line reason-string
         require(shares(transferrer) >= sharesAmount, "PaymentSplitter: not enough shares balance");
         // Deduct from transferrer shares balance

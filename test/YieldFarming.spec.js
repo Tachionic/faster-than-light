@@ -45,11 +45,6 @@ describe('YieldFarming contract', () => {
       )
       multiplier = await aBDKMath.fromInt(constants.MULTIPLIER)
       payees = new RecordList([first.address, second.address, third.address], [100, 100, 100])
-      // payees = [
-      //   new Record(first.address, 100),
-      //   new Record(second.address, 100),
-      //   new Record(third.address, 100)
-      // ]
       timestamp = await waffle.deployContract(first, Timestamp)
       acceptedToken = await waffle.deployContract(first, ERC20Mock, [
         'ERC20Mock name',
@@ -158,6 +153,33 @@ describe('YieldFarming contract', () => {
         await expect(deploy.yieldFarming.connect(transferrer).transferShares(destinatary.address, amountToTransfer))
           .to.emit(deploy.yieldFarming, 'SharesTransferred')
           .withArgs(transferrer.address, destinatary.address, amountToTransfer)
+      })
+      it('Revert when transferrer is not a payee', async () => {
+        await expect(deploy.yieldFarming.connect(deploy.fourth).transferShares(destinatary.address, amountToTransfer))
+          .to.be.revertedWith('PaymentSplitter: transferrer not a payee')
+      })
+      it('Revert when trying to transfer more than balance', async () => {
+        await expect(deploy.yieldFarming.connect(transferrer).transferShares(destinatary.address, deploy.constants.SHARES.SECOND + 1))
+          .to.be.revertedWith('PaymentSplitter: not enough shares balance')
+      })
+      it('Revert when trying to transfer more than balance', async () => {
+        await expect(deploy.yieldFarming.connect(transferrer).transferShares(destinatary.address, deploy.constants.SHARES.SECOND + 1))
+          .to.be.revertedWith('PaymentSplitter: not enough shares balance')
+      })
+      describe('If destinatary is non payee', async () => {
+        beforeEach(async () => {
+          destinatary = deploy.fourth
+        })
+        it('Emit SharesTransferred', async () => {
+          await expect(deploy.yieldFarming.connect(transferrer).transferShares(destinatary.address, amountToTransfer))
+            .to.emit(deploy.yieldFarming, 'SharesTransferred')
+            .withArgs(transferrer.address, destinatary.address, amountToTransfer)
+        })
+        it('Emit PayeeAdded', async () => {
+          await expect(deploy.yieldFarming.connect(transferrer).transferShares(destinatary.address, amountToTransfer))
+            .to.emit(deploy.yieldFarming, 'PayeeAdded')
+            .withArgs(destinatary.address, amountToTransfer)
+        })
       })
       describe('After transfer', async () => {
         beforeEach(async () => {
