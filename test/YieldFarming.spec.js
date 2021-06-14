@@ -85,7 +85,7 @@ describe('YieldFarming contract', () => {
   describe('Payment splitter', async () => {
     let setup
     beforeEach(async () => {
-      setup = await setupTest({MULTIPLIER: 1E12})
+      setup = await setupTest({ MULTIPLIER: 1E12 })
     })
     it('Shares 0', async () => {
       setup.payees.records[1].shares = 0
@@ -171,7 +171,7 @@ describe('YieldFarming contract', () => {
   describe('With multiplier 1E12', async () => {
     let setup
     beforeEach(async () => {
-      setup = await setupTest({MULTIPLIER: 1E12})
+      setup = await setupTest({ MULTIPLIER: 1E12 })
     })
     describe('Shares transfer', async () => {
       let transferrer, destinatary, amountToTransfer, transferrerInititalShares, destinataryInititalShares
@@ -434,7 +434,7 @@ describe('YieldFarming contract', () => {
   describe('With multiplier 0', async () => {
     let setup
     beforeEach(async () => {
-      setup = await setupTest({MULTIPLIER: 0})
+      setup = await setupTest({ MULTIPLIER: 0 })
     })
     describe('Release token', async () => {
       describe('with deposit', async () => {
