@@ -4,7 +4,7 @@ import { ethers } from 'hardhat'
 
 export default async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments
-  const { deployer, first, second, third, fourth } = await getNamedAccounts()
+  const { deployer, shield, monetaryPolicyReserve, executiveTeamBudget, workingCapital } = await getNamedAccounts()
 
   const aBDKMathContract = await deployments.get('ABDKMathQuad')
   const aBDKMath = await ethers.getContractAt('ABDKMathQuad', aBDKMathContract.address)
@@ -31,7 +31,7 @@ export default async ({ getNamedAccounts, deployments }) => {
     await aBDKMath.fromInt(constants.INTEREST.DENOMINATOR)
   )
   const multiplier = await aBDKMath.fromInt(constants.MULTIPLIER)
-  const recordList = new RecordList([first, second, third, fourth], [10, 10, 30, 50])
+  const recordList = new RecordList([shield, monetaryPolicyReserve, executiveTeamBudget, workingCapital], [10, 10, 30, 50])
 
   await deploy('YieldFarming', {
     from: deployer,
@@ -51,4 +51,4 @@ export default async ({ getNamedAccounts, deployments }) => {
   })
 }
 export const tags = ['YieldFarming']
-module.exports.dependencies = ['ABDKMathQuad', 'Timestamp', 'RewardCalculator', 'UChildAdministrableERC20', 'UChildAdministrableERC20'] // this ensures the ABDKMathQuad script above is executed first, so `deployments.get('ABDKMathQuad')` succeeds
+module.exports.dependencies = ['ABDKMathQuad', 'Timestamp', 'RewardCalculator', 'UChildAdministrableERC20', 'UChildAdministrableERC20'] // this ensures the ABDKMathQuad script above is executed shield, so `deployments.get('ABDKMathQuad')` succeeds
