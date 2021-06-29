@@ -42,7 +42,7 @@
     "solhint:fix": "solhint --fix 'contracts/**/*.sol'",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
-    "compile": "hardhat compile",
+    "compile": "node --require esm node_modules/.bin/hardhat compile",
     "test": "node --require esm node_modules/.bin/hardhat test",
     "coverage": "node --require esm node_modules/.bin/hardhat coverage",
     "coveralls": "yarn coverage && cat coverage/lcov.info | coveralls",

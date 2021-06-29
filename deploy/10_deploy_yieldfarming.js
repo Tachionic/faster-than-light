@@ -4,7 +4,11 @@ import { ethers } from 'hardhat'
 
 export default async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments
-  const { deployer, shield, monetaryPolicyReserve, executiveTeamBudget, workingCapital } = await getNamedAccounts()
+  const { deployer, first, second, third, fourth } = await getNamedAccounts()
+  const shield = first
+  const monetaryPolicyReserve = second
+  const executiveTeamBudget = third
+  const workingCapital = fourth
 
   const aBDKMathContract = await deployments.get('ABDKMathQuad')
   const aBDKMath = await ethers.getContractAt('ABDKMathQuad', aBDKMathContract.address)
