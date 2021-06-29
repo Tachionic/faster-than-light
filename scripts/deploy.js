@@ -1,5 +1,5 @@
-import { rawDeploy, Timestamp, waffle, expect, ethers, MULTIPLIER, RecordList } from './mainDeploy'
-import { parse, stringify } from 'flatted'
+import { rawDeploy, Timestamp, waffle, ethers, MULTIPLIER, RecordList } from './mainDeploy'
+import { stringify } from 'flatted'
 const fs = require('fs')
 
 const deployMe = async (_multiplier) => {
@@ -10,9 +10,13 @@ const deployMe = async (_multiplier) => {
   const TOKEN_NAME = 'Interest Faster Than Light'
   const TOKEN_SYMBOL = 'IFTL'
   const TOKEN = { NAME: TOKEN_NAME, SYMBOL: TOKEN_SYMBOL }
-  const safeERC20 = await ethers.getContractAt(
-    'SafeERC20',
+  const uChildERC20Proxy = await ethers.getContractAt(
+    'UChildERC20Proxy',
     '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'
+  )
+  const safeERC20 = await ethers.getContractAt(
+    '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol:SafeERC20',
+    await uChildERC20Proxy.implementation()
   )
   const MULTIPLIER = _multiplier
   const constants = { MULTIPLIER, LOCK_TIME, INTEREST, TOKEN }
@@ -26,24 +30,24 @@ const main = async () => {
   const deploy = await deployMe(MULTIPLIER)
   const deployString = stringify(deploy)
   fs.writeFileSync('deploy.json', deployString)
-  const readDeployString = fs.readFileSync('deploy.json')
-  const readDeploy = parse(readDeployString)
-  expect(deploy.acceptedToken.address)
-    .to.be.equal(readDeploy.acceptedToken.address)
-  expect(deploy.first.address)
-    .to.be.equal(readDeploy.first.address)
-  expect(deploy.second.address)
-    .to.be.equal(readDeploy.second.address)
-  expect(deploy.third.address)
-    .to.be.equal(readDeploy.third.address)
-  expect(deploy.yieldFarming.address)
-    .to.be.equal(readDeploy.yieldFarming.address)
-  expect(deploy.yieldFarmingToken.address)
-    .to.be.equal(readDeploy.yieldFarmingToken.address)
-  expect(deploy.timestamp.address)
-    .to.be.equal(readDeploy.timestamp.address)
-  expect(deploy.payees)
-    .to.be.deep.equal(readDeploy.payees)
+  // const readDeployString = fs.readFileSync('deploy.json')
+  // const readDeploy = parse(readDeployString)
+  // expect(deploy.acceptedToken.address)
+  //   .to.be.equal(readDeploy.acceptedToken.address)
+  // expect(deploy.first.address)
+  //   .to.be.equal(readDeploy.first.address)
+  // expect(deploy.second.address)
+  //   .to.be.equal(readDeploy.second.address)
+  // expect(deploy.third.address)
+  //   .to.be.equal(readDeploy.third.address)
+  // expect(deploy.yieldFarming.address)
+  //   .to.be.equal(readDeploy.yieldFarming.address)
+  // expect(deploy.yieldFarmingToken.address)
+  //   .to.be.equal(readDeploy.yieldFarmingToken.address)
+  // expect(deploy.timestamp.address)
+  //   .to.be.equal(readDeploy.timestamp.address)
+  // expect(deploy.payees)
+  //   .to.be.deep.equal(readDeploy.payees)
 }
 
 main()
