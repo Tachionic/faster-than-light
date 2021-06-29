@@ -61,6 +61,9 @@ module.exports = {
     ]
   },
   networks: {
+    ganache: {
+      url: 'http://localhost:8545'
+    },
     hardhat: {
       blockGasLimit: 10000000
     },
