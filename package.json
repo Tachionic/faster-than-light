@@ -51,7 +51,8 @@
     "prepare": "husky install",
     "gas-report": "env ENABLE_GAS_REPORT=1 npm run test",
     "deploy": "node --require esm node_modules/.bin/hardhat deploy --network",
-    "deploy:legacy": "node --require esm node_modules/.bin/hardhat run scripts/deploy.js --network"
+    "deploy:legacy": "node --require esm node_modules/.bin/hardhat run scripts/deploy.js --network",
+    "deploy:read": "node --require esm node_modules/.bin/hardhat run scripts/readDeploy.js"
   },
   "author": "David Kneel",
   "license": "ISC"
