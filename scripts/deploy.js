@@ -10,14 +10,8 @@ const deployMe = async (_multiplier) => {
   const TOKEN_NAME = 'Interest Faster Than Light'
   const TOKEN_SYMBOL = 'IFTL'
   const TOKEN = { NAME: TOKEN_NAME, SYMBOL: TOKEN_SYMBOL }
-  const uChildERC20Proxy = await ethers.getContractAt(
-    'UChildERC20Proxy',
-    '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'
-  )
-  const safeERC20 = await ethers.getContractAt(
-    '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol:SafeERC20',
-    await uChildERC20Proxy.implementation()
-  )
+  const SafeERC20 = await ethers.getContractFactory('@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol:SafeERC20')
+  const safeERC20 = SafeERC20.attach('0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174')
   const MULTIPLIER = _multiplier
   const constants = { MULTIPLIER, LOCK_TIME, INTEREST, TOKEN }
   const [first, second, third, fourth] = await ethers.getSigners()

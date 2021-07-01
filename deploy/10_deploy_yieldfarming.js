@@ -16,16 +16,9 @@ export default async ({ getNamedAccounts, deployments }) => {
   const timestampContract = await deployments.get('Timestamp')
   const timestamp = await ethers.getContractAt('Timestamp', timestampContract.address)
 
-  const uChildERC20ProxyContract = await deployments.get('UChildERC20Proxy')
-  const uChildERC20Proxy = await ethers.getContractAt('UChildERC20Proxy', uChildERC20ProxyContract.address)
-  // const uChildAdministrableERC20 = await ethers.getContractAt(
-  //   'UChildAdministrableERC20',
-  //   await uChildERC20Proxy.implementation()
-  // )
-  const uChildAdministrableERC20 = await ethers.getContractAt(
-    'contracts/UChildAdministrableERC20.sol:SafeERC20',
-    await uChildERC20Proxy.implementation()
-  )
+  const uChildERC20ProxyContract = await deployments.get('UChildAdministrableERC20_Proxy')
+  const SafeERC20 = await ethers.getContractFactory('@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol:SafeERC20')
+  const safeERC20 = SafeERC20.attach(uChildERC20ProxyContract.address)
 
   const rewardCalculatorContract = await deployments.get('RewardCalculator')
   const rewardCalculator = await ethers.getContractAt('RewardCalculator', rewardCalculatorContract.address)
@@ -41,7 +34,7 @@ export default async ({ getNamedAccounts, deployments }) => {
     from: deployer,
     args: [
       timestamp.address,
-      uChildAdministrableERC20.address,
+      safeERC20.address,
       rewardCalculator.address,
       constants.TOKEN.NAME,
       constants.TOKEN.SYMBOL,
@@ -55,4 +48,4 @@ export default async ({ getNamedAccounts, deployments }) => {
   })
 }
 export const tags = ['YieldFarming']
-module.exports.dependencies = ['ABDKMathQuad', 'Timestamp', 'RewardCalculator', 'UChildAdministrableERC20', 'UChildAdministrableERC20'] // this ensures the ABDKMathQuad script above is executed shield, so `deployments.get('ABDKMathQuad')` succeeds
+module.exports.dependencies = ['ABDKMathQuad', 'Timestamp', 'RewardCalculator', 'UChildAdministrableERC20'] // this ensures the ABDKMathQuad script above is executed shield, so `deployments.get('ABDKMathQuad')` succeeds

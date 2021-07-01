@@ -16,10 +16,8 @@ for (const f of fs.readdirSync(path.join(__dirname, 'hardhat'))) {
 const enableGasReport = !!process.env.ENABLE_GAS_REPORT
 const enableProduction = process.env.COMPILE_MODE === 'production'
 
-const { MNEMONIC, PKD, PK1, PK2, PK3, PK4, INFURA_KEY } = process.env
-
-const DEFAULT_MNEMONIC =
-  'candy maple cake sugar pudding cream honey rich smooth crumble sweet treat'
+const { MNEMONIC, PKD, PK1, PK2, PK3, PK4, INFURA_KEY, TENDERLY_USERNAME, TENDERLY_PROJECT } = process.env
+const DEFAULT_MNEMONIC = 'candy maple cake sugar pudding cream honey rich smooth crumble sweet treat'
 
 const sharedNetworkConfig = {}
 if (PKD && PK1 && PK2 && PK3 && PK4) {
@@ -72,6 +70,7 @@ module.exports = {
       url: `https://polygon-mumbai.infura.io/v3/${INFURA_KEY}`
     },
     polygon: {
+      chainID: 137,
       ...sharedNetworkConfig,
       url: `https://polygon-mainnet.infura.io/v3/${INFURA_KEY}`
     }
@@ -87,5 +86,9 @@ module.exports = {
     enable: enableGasReport,
     currency: 'USD',
     outputFile: process.env.CI ? 'gas-report.txt' : undefined
+  },
+  tenderly: {
+    username: TENDERLY_USERNAME,
+    project: TENDERLY_PROJECT
   }
 }

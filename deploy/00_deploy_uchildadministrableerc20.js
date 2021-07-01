@@ -3,7 +3,7 @@ export default async ({ getNamedAccounts, deployments }) => {
   const { deployer } = await getNamedAccounts()
   await deploy('UChildAdministrableERC20', {
     from: deployer,
-    args: [],
+    proxy: true,
     log: true
   })
 }
