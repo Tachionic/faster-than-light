@@ -232,12 +232,12 @@ describe('YieldFarming contract', () => {
     describe('Release token', async () => {
       describe('without deposit', async () => {
         it('try release', async () => {
-          await expect(deploy.yieldFarming.releaseTokens())
-            .to.be.revertedWith('TokenTimeLock not found!')
+          await expect(deploy.yieldFarming.releaseTokens(0))
+            .to.be.revertedWith('Index out of bounds!')
         })
         it('try get TokenTimeLock', async () => {
-          await expect(deploy.yieldFarming.getMyTokenTimeLock())
-            .to.be.revertedWith('TokenTimeLock not found!')
+          await expect(deploy.yieldFarming.getMyTokenTimeLock(0))
+            .to.be.revertedWith('Index out of bounds!')
         })
       })
       describe('with deposit', async () => {
@@ -248,7 +248,7 @@ describe('YieldFarming contract', () => {
           await deploy.yieldFarming.deposit(depositValue, { from: deploy.first.address })
         })
         it('before unlock', async () => {
-          await expect(deploy.yieldFarming.releaseTokens())
+          await expect(deploy.yieldFarming.releaseTokens(0))
             .to.be.revertedWith('TokenTimeLock: current time is before release time')
         })
         describe('after unlock', async () => {
@@ -257,13 +257,13 @@ describe('YieldFarming contract', () => {
           })
           it('Emit YieldFarmingTokenRelease', async () => {
             const releaseValue = 997506234413965
-            await expect(deploy.yieldFarming.releaseTokens())
+            await expect(deploy.yieldFarming.releaseTokens(0))
               .to.emit(deploy.yieldFarming, 'YieldFarmingTokenRelease')
               .withArgs(deploy.first.address, releaseValue)
           })
           describe('After release', async () => {
             beforeEach(async () => {
-              await deploy.yieldFarming.releaseTokens()
+              await deploy.yieldFarming.releaseTokens(0)
             })
             describe('Burn tokens', async () => {
               let burnValue
@@ -415,7 +415,7 @@ describe('YieldFarming contract', () => {
             await deploy.timestamp.mock.getTimestamp.returns(deploy.constants.TIMESTAMPS.DEPOSIT)
           })
           it('Revert with no tokens to release', async () => {
-            await expect(deploy.yieldFarming.releaseTokens())
+            await expect(deploy.yieldFarming.releaseTokens(0))
               .to.be.revertedWith('TokenTimeLock: no tokens to release')
           })
         })

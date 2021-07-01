@@ -26,7 +26,7 @@ contract YieldFarming is PaymentSplitter {
     uint private lockTime;
     uint private tokenomicsTimestamp;
 
-    mapping(address => TokenTimeLock) private tokenTimeLocks;
+    mapping(address => TokenTimeLock[]) private tokenTimeLocks;
 
     constructor(
         Timestamp _timestamp,
@@ -59,7 +59,7 @@ contract YieldFarming is PaymentSplitter {
         super.deposit(depositor, amount);
         uint timeStamp = timestamp.getTimestamp();
         TokenTimeLock tokenTimeLock = new TokenTimeLock(timestamp, yieldFarmingToken, depositor, timeStamp + lockTime);
-        tokenTimeLocks[depositor] = tokenTimeLock;
+        tokenTimeLocks[depositor].push(tokenTimeLock);
         yieldFarmingToken.mint(
             address(tokenTimeLock),
             rewardCalculator.calculateQuantity(amount, multiplier, interestRate, timeStamp - tokenomicsTimestamp)
@@ -79,17 +79,32 @@ contract YieldFarming is PaymentSplitter {
         emit YieldFarmingTokenBurn(burner, amount);
     }
 
-    function getMyTokenTimeLock() public view returns (TokenTimeLock) {
+    function getMyTokenTimeLock(uint tokenTimelockIndex) public view returns (TokenTimeLock) {
         address msgSender = _msgSender();
-        require(address(tokenTimeLocks[msgSender]) != address(0), "TokenTimeLock not found!");
+        require(tokenTimelockIndex < tokenTimeLocks[msgSender].length, "Index out of bounds!");
+        return tokenTimeLocks[msgSender][tokenTimelockIndex];
+    }
+
+    function getMyTokenTimeLocks() public view returns (TokenTimeLock[] memory) {
+        address msgSender = _msgSender();
         return tokenTimeLocks[msgSender];
     }
 
-    function releaseTokens() public {
+    function releaseTokens(uint tokenTimelockIndex) public {
         address releaser = _msgSender();
-        TokenTimeLock tokenTimelock = getMyTokenTimeLock();
+        require(tokenTimelockIndex < tokenTimeLocks[releaser].length, "Index out of bounds!");
+        TokenTimeLock tokenTimelock = takeTokenTimeLock(releaser, tokenTimelockIndex);
         uint amount = yieldFarmingToken.balanceOf(address(tokenTimelock));
         tokenTimelock.release();
         emit YieldFarmingTokenRelease(releaser, amount);
+    }
+
+    function takeTokenTimeLock(address sender, uint tokenTimelockIndex) public returns (TokenTimeLock) {
+        TokenTimeLock element = tokenTimeLocks[sender][tokenTimelockIndex];
+        uint lengthM1 = tokenTimeLocks[sender].length - 1;
+        tokenTimeLocks[sender][tokenTimelockIndex] = tokenTimeLocks[sender][lengthM1];
+        delete tokenTimeLocks[sender][lengthM1];
+        tokenTimeLocks[sender].pop;
+        return element;
     }
 }
