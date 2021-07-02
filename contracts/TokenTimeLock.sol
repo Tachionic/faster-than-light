@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./Timestamp.sol";
 
@@ -12,7 +13,7 @@ import "./Timestamp.sol";
  * Useful for simple vesting schedules like "advisors get all of their tokens
  * after 1 year".
  */
-contract TokenTimeLock {
+contract TokenTimeLock is Ownable {
     using SafeERC20 for IERC20;
 
     // ERC20 basic token contract being held
@@ -58,7 +59,7 @@ contract TokenTimeLock {
     /**
      * @notice Transfers tokens held by timelock to beneficiary.
      */
-    function release() public virtual {
+    function release() public virtual onlyOwner {
         // solhint-disable-next-line not-rely-on-time, reason-string
         require(timestamp.getTimestamp() >= releaseTime(), "TokenTimeLock: current time is before release time");
 

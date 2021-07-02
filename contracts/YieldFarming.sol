@@ -80,14 +80,13 @@ contract YieldFarming is PaymentSplitter {
     }
 
     function getMyTokenTimeLock(uint tokenTimelockIndex) public view returns (TokenTimeLock) {
-        address msgSender = _msgSender();
-        require(tokenTimelockIndex < tokenTimeLocks[msgSender].length, "Index out of bounds!");
-        return tokenTimeLocks[msgSender][tokenTimelockIndex];
+        address me = _msgSender();
+        require(tokenTimelockIndex < tokenTimeLocks[me].length, "Index out of bounds!");
+        return tokenTimeLocks[me][tokenTimelockIndex];
     }
 
     function getMyTokenTimeLocks() public view returns (TokenTimeLock[] memory) {
-        address msgSender = _msgSender();
-        return tokenTimeLocks[msgSender];
+        return tokenTimeLocks[_msgSender()];
     }
 
     function releaseTokens(uint tokenTimelockIndex) public {
@@ -99,7 +98,7 @@ contract YieldFarming is PaymentSplitter {
         emit YieldFarmingTokenRelease(releaser, amount);
     }
 
-    function takeTokenTimeLock(address sender, uint tokenTimelockIndex) public returns (TokenTimeLock) {
+    function takeTokenTimeLock(address sender, uint tokenTimelockIndex) internal returns (TokenTimeLock) {
         TokenTimeLock element = tokenTimeLocks[sender][tokenTimelockIndex];
         uint lengthM1 = tokenTimeLocks[sender].length - 1;
         tokenTimeLocks[sender][tokenTimelockIndex] = tokenTimeLocks[sender][lengthM1];
